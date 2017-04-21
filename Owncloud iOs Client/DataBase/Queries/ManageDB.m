@@ -89,7 +89,7 @@
             DLog(@"Error in createDataBase table uploads_offline");
         }
         
-        correctQuery = [db executeUpdate:@"CREATE TABLE IF NOT EXISTS 'shared' ('id' INTEGER PRIMARY KEY, 'file_source' INTEGER, 'item_source' INTEGER, 'share_type' INTEGER, 'share_with' VARCHAR, 'path' VARCHAR, 'permissions' INTEGER, 'shared_date' LONG, 'expiration_date' LONG, 'token' VARCHAR, 'share_with_display_name' VARCHAR, 'is_directory' BOOL, 'user_id' INTEGER, 'id_remote_shared' INTEGER)"];
+        correctQuery = [db executeUpdate:@"CREATE TABLE IF NOT EXISTS 'shared' ('id' INTEGER PRIMARY KEY, 'file_source' INTEGER, 'item_source' INTEGER, 'share_type' INTEGER, 'share_with' VARCHAR, 'path' VARCHAR, 'permissions' INTEGER, 'shared_date' LONG, 'expiration_date' LONG, 'token' VARCHAR, 'share_with_display_name' VARCHAR, 'is_directory' BOOL, 'user_id' INTEGER, 'id_remote_shared' INTEGER, 'name' VARCHAR, 'url' VARCHAR)"];
         
         if (!correctQuery) {
             DLog(@"Error in createDataBase table shared");
@@ -1191,6 +1191,38 @@
         dbOperationSuccessful = [db executeUpdate:@"DROP TABLE users_temp"];
         if (!dbOperationSuccessful) {
             DLog(@"Error dropping table users_temp");
+        }
+        
+    }];
+    
+}
+
+
+///-----------------------------------
+/// @name Update Database version with 19 version to 20
+///-----------------------------------
+
+/**
+ * Changes:
+ *
+ * Alter shared table, added new fields to store name and url
+ *
+ */
++ (void) updateDBVersion19to20{
+    
+    FMDatabaseQueue *queue = Managers.sharedDatabase;
+    
+    [queue inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        BOOL correctQuery=NO;
+        
+        correctQuery = [db executeUpdate:@"ALTER TABLE shared ADD name VARCHAR NOT NULL DEFAULT ''"];
+        if (!correctQuery) {
+            DLog(@"Error update version 19 to 20 table shared 'name' ");
+        }
+        
+        correctQuery = [db executeUpdate:@"ALTER TABLE shared ADD url VARCHAR NOT NULL DEFAULT ''"];
+        if (!correctQuery) {
+            DLog(@"Error update version 19 to 20 table shared 'url' ");
         }
         
     }];
