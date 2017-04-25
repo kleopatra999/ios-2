@@ -520,7 +520,7 @@
         }
     }
     
-    [self unshareTheFile:sharedByLink];
+    [self unshareTheFileByIdRemoteShared:sharedByLink.idRemoteShared];
 }
 
 
@@ -708,7 +708,7 @@
  *
  * @param OCSharedDto -> The shared file/folder
  */
-- (void) unshareTheFile: (OCSharedDto *)sharedByLink {
+- (void)unshareTheFileByIdRemoteShared:(NSInteger)idRemoteShared {
     
     [self initManageErrors];
 
@@ -733,7 +733,9 @@
     
     [[AppDelegate sharedOCCommunication] setUserAgent:[UtilsUrls getUserAgent]];
     
-    [[AppDelegate sharedOCCommunication] unShareFileOrFolderByServer:app.activeUser.url andIdRemoteShared:sharedByLink.idRemoteShared onCommunication:[AppDelegate sharedOCCommunication] successRequest:^(NSHTTPURLResponse *response, NSString *redirectedServer) {
+    [[AppDelegate sharedOCCommunication] unShareFileOrFolderByServer:[UtilsUrls getFullRemoteServerPath:app.activeUser] andIdRemoteShared:idRemoteShared onCommunication:[AppDelegate sharedOCCommunication] successRequest:^(NSHTTPURLResponse *response, NSString *redirectedServer) {
+        
+        [self endLoading];
         
         BOOL isSamlCredentialsError=NO;
         
@@ -742,7 +744,6 @@
             //Check if there are fragmens of saml in url, in this case there are a credential error
             isSamlCredentialsError = [FileNameUtils isURLWithSamlFragment:response];
             if (isSamlCredentialsError) {
-                [self endLoading];
                 [self errorLogin];
                 
                 if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
@@ -750,10 +751,9 @@
                 }
             }
         }
+        
         if (!isSamlCredentialsError) {
             [[NSNotificationCenter defaultCenter] postNotificationName: RefreshSharesItemsAfterCheckServerVersion object: nil];
-            
-            [self endLoading];
             
             if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
                 [self.delegate finishUnShareWithStatus:true];
@@ -822,7 +822,7 @@
     
     NSString *path = [UtilsUrls getFilePathOnDBByFilePathOnFileDto:parentFolder.filePath andUser:APP_DELEGATE.activeUser];
     path = [path stringByAppendingString:parentFolder.fileName];
-    path = [path stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    path = [path stringByRemovingPercentEncoding];
     
     [[AppDelegate sharedOCCommunication] readSharedByServer:APP_DELEGATE.activeUser.url andPath:path onCommunication:[AppDelegate sharedOCCommunication] successRequest:^(NSHTTPURLResponse *response, NSArray *listOfShared, NSString *redirectedServer) {
         

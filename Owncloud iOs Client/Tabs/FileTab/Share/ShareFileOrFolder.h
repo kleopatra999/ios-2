@@ -73,11 +73,11 @@
 ///-----------------------------------
 
 /**
- * This method unshares the file/folder
+ * This method unshare the file/folder
  *
- * @param OCSharedDto -> The shared file/folder
+ * @param idRemoteShared -> The id of the remote share
  */
-- (void) unshareTheFile: (OCSharedDto *)sharedByLink;
+- (void)unshareTheFileByIdRemoteShared:(NSInteger)idRemoteShared;
 
 ///-----------------------------------
 /// @name Click on share link from file
