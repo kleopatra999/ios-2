@@ -32,6 +32,7 @@
 #import "OCShareUser.h"
 #import "ShareUtils.h"
 #import "UtilsFramework.h"
+#import "ShareLinkViewController.h"
 
 //tools
 #define standardDelay 0.2
@@ -1146,9 +1147,10 @@
     if (k_is_share_with_users_available && indexPath.section == 1) {
         //Edit share with user Privileges
         
-        OCSharedDto *shareUser = [self.sharedUsersOrGroups objectAtIndex:indexPath.row];
+        OCShareUser *shareUser = [self.sharedUsersOrGroups objectAtIndex:indexPath.row];
+        OCSharedDto *shareDto = shareUser.sharedDto;
         
-        ShareEditUserViewController *viewController = [[ShareEditUserViewController alloc] initWithFileDto:self.sharedItem andOCSharedDto:shareUser];
+        ShareEditUserViewController *viewController = [[ShareEditUserViewController alloc] initWithFileDto:self.sharedItem andOCSharedDto:shareDto];
         OCNavigationController *navController = [[OCNavigationController alloc] initWithRootViewController:viewController];
         
         if (IS_IPHONE)
@@ -1162,8 +1164,26 @@
             [self presentViewController:navController animated:YES completion:nil];
         }
         
-    } else {
+    } else if (k_is_share_by_link_available) {
         //TODO: edit link options
+        
+        OCSharedDto *shareDto = [self.sharedPublicLinks objectAtIndex:indexPath.row];
+        
+        ShareLinkViewController *viewController = [[ShareLinkViewController alloc] initWithFileDto:self.sharedItem andOCSharedDto:shareDto];
+        OCNavigationController *navController = [[OCNavigationController alloc] initWithRootViewController:viewController];
+        
+        if (IS_IPHONE)
+        {
+            viewController.hidesBottomBarWhenPushed = YES;
+            [self presentViewController:navController animated:YES completion:nil];
+        } else {
+            OCNavigationController *navController = nil;
+            navController = [[OCNavigationController alloc] initWithRootViewController:viewController];
+            navController.modalPresentationStyle = UIModalPresentationFormSheet;
+            [self presentViewController:navController animated:YES completion:nil];
+        }
+
+        
     }
 
     
