@@ -19,6 +19,7 @@ import UIKit
 class ShareMainLinkCell: UITableViewCell {
     
     @IBOutlet weak var itemName: UILabel!
+    @IBOutlet var buttonGetLink: UIButton!
     
     override func awakeFromNib() {
         super.awakeFromNib()

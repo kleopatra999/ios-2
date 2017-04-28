@@ -20,7 +20,7 @@ class ShareLinkOptionCell: UITableViewCell {
      @IBOutlet weak var optionSwith: UISwitch!
      @IBOutlet weak var optionName: UILabel!
      @IBOutlet weak var optionDetail: UILabel!
-     @IBOutlet var textFieldNameLink: UITextField!
+     @IBOutlet var optionTextField: UITextField!
 
     override func awakeFromNib() {
         super.awakeFromNib()

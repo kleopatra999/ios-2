@@ -21,6 +21,7 @@
 #import "ManageFilesDB.h"
 #import "UtilsUrls.h"
 #import "ManageSharesDB.h"
+#import "UtilsFramework.h"
 
 #define shareLinkViewNibName @"ShareLinkViewController"
 
@@ -33,7 +34,7 @@
 //#define heightOfShareLinkButtonRow 40.0
 
 #define heightOfShareLinkOptionRow 55.0f
-#define heightOfShareLinkOptionSection 10.0f
+#define heightOfShareLinkOptionSection 15.0f
 #define heightOfShareLinkOptionTitleFirstSection 55.0f
 
 
@@ -44,9 +45,6 @@
 
 //Date server format
 #define dateServerFormat @"YYYY-MM-dd"
-
-//alert share password
-#define password_alert_view_tag 601
 
 //permissions value to not update them
 #define k_permissions_do_not_update 0
@@ -70,6 +68,8 @@
 @property (nonatomic) BOOL isAllowEditingEnabled;
 @property (nonatomic) BOOL isAllowEditingShown;
 
+@property (nonatomic, strong) UIPopoverController* activityPopoverController;
+
 
 @end
 
@@ -84,16 +84,16 @@
         _sharedItem = fileDto;
         _updatedOCShare = sharedDto;
         
-        _isPasswordProtectEnabled = false;
-        _isExpirationDateEnabled = false;
-
-        _optionsShownWithShareLink = 0;
+        if (linkOptionsViewMode == LinkOptionsViewModeCreate) {
+            _isPasswordProtectEnabled = NO;
+            _isExpirationDateEnabled = NO;
+            _isAllowEditingEnabled = NO;
+        }
+       
+        [self updateInterfaceWithShareLinkStatus];
         
-        _isAllowEditingEnabled = false;
-        _isAllowEditingShown = false;
-        
-        _manageNetworkErrors = [ManageNetworkErrors new];
-        _manageNetworkErrors.delegate = self;
+//        _manageNetworkErrors = [ManageNetworkErrors new];
+//        _manageNetworkErrors.delegate = self;
     }
     
     return self;
@@ -111,11 +111,6 @@
 
 
 #pragma mark - Action Methods
-
-- (void) didSelectCloseView {
-    [self dismissViewControllerAnimated:true completion:nil];
-}
-
 - (void) reloadView {
     
     self.isPasswordProtectEnabled = false;
@@ -203,9 +198,6 @@
         case 2:
             title = NSLocalizedString(@"title_share_link_option_expiration", nil);
             break;
-        case 3:
-            title = NSLocalizedString(@"title_share_link_option_allow_editing", nil);
-            break;
             
         default:
             break;
@@ -229,73 +221,54 @@
 
     switch (indexPath.section) {
         case 0:
-            shareLinkOptionCell.optionName.hidden = YES;
-            shareLinkOptionCell.optionDetail.hidden = YES;
-            shareLinkOptionCell.optionSwith.hidden = YES;
-            shareLinkOptionCell.textFieldNameLink.hidden = NO;
-            shareLinkOptionCell.textFieldNameLink.placeholder = NSLocalizedString(@"title_share_link_option_name", nil);
+            shareLinkOptionCell.optionTextField.hidden = NO;
+            shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_name", nil);
+            if (self.linkOptionsViewMode == LinkOptionsViewModeEdit) {
+                shareLinkOptionCell.optionTextField.text = self.updatedOCShare.name;
+            }
             break;
 
         case 1:
-            shareLinkOptionCell.optionName.text = NSLocalizedString(@"title_share_link_option_password", nil);
 
-            if (self.isPasswordProtectEnabled) {
-                shareLinkOptionCell.optionName.textColor = [UIColor blackColor];
-                shareLinkOptionCell.optionDetail.textColor = [UIColor blackColor];
-                shareLinkOptionCell.optionDetail.text = NSLocalizedString(@"secured_link", nil);
-            } else {
-                shareLinkOptionCell.optionName.textColor = [UIColor grayColor];
-                shareLinkOptionCell.optionDetail.textColor = [UIColor grayColor];
-                shareLinkOptionCell.optionDetail.text = @"";
-            }
+            shareLinkOptionCell.optionTextField.hidden = NO;
+            shareLinkOptionCell.optionSwith.hidden = NO;
             [shareLinkOptionCell.optionSwith setOn:self.isPasswordProtectEnabled animated:false];
-
- //           [shareLinkOptionCell.optionSwith addTarget:self action:@selector(passwordProtectedSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
-
+            
+            if (self.isPasswordProtectEnabled) {
+                shareLinkOptionCell.optionTextField.placeholder = @"**********";
+            } else {
+                shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_password", nil);
+            }
             break;
 
         case 2:
-            shareLinkOptionCell.optionName.text = NSLocalizedString(@"title_share_link_option_expiration", nil);
-
-            if (self.isAllowEditingEnabled) {
-                shareLinkOptionCell.optionName.textColor = [UIColor blackColor];
-                shareLinkOptionCell.optionDetail.textColor = [UIColor blackColor];
-            } else {
-                shareLinkOptionCell.optionName.textColor = [UIColor grayColor];
-                shareLinkOptionCell.optionDetail.textColor = [UIColor grayColor];
+            
+            shareLinkOptionCell.optionTextField.hidden = NO;
+            shareLinkOptionCell.optionTextField.allowsEditingTextAttributes = NO;
+            shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_expiration", nil);
+            shareLinkOptionCell.optionSwith.hidden = NO;
+            [shareLinkOptionCell.optionSwith setOn:self.isExpirationDateEnabled animated:false];
+            
+            if (self.isExpirationDateEnabled) {
+                shareLinkOptionCell.optionTextField.text = [self stringOfDate:[NSDate dateWithTimeIntervalSince1970: self.updatedOCShare.expirationDate]];
             }
-            shareLinkOptionCell.optionDetail.text = @"";
-//            [shareLinkOptionCell.optionSwith setOn:self.isAllowEditingEnabled animated:false];
-
-            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(allowEditingSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
-
+//            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(expirationTimeSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
             break;
             
         case 3:
-            shareLinkOptionCell.optionName.text = NSLocalizedString(@"title_share_link_option_allow_editing", nil);
-            
-            if (self.isAllowEditingEnabled) {
-                shareLinkOptionCell.optionName.textColor = [UIColor blackColor];
-                shareLinkOptionCell.optionDetail.textColor = [UIColor blackColor];
-            } else {
-                shareLinkOptionCell.optionName.textColor = [UIColor grayColor];
-                shareLinkOptionCell.optionDetail.textColor = [UIColor grayColor];
-            }
-            shareLinkOptionCell.optionDetail.text = @"";
-            //            [shareLinkOptionCell.optionSwith setOn:self.isAllowEditingEnabled animated:false];
-            
-            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(allowEditingSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
-            
+            shareLinkOptionCell.optionTextField.hidden = NO;
+            shareLinkOptionCell.optionTextField.allowsEditingTextAttributes = NO;
+            shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"title_share_link_option_allow_editing", nil);
+            shareLinkOptionCell.optionSwith.hidden = NO;
+            [shareLinkOptionCell.optionSwith setOn:self.isAllowEditingEnabled animated:false];
+          //  [shareLinkOptionCell.optionSwith addTarget:self action:@selector(allowEditingSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
             break;
 
         default:
-            //Not expected
-            DLog(@"Not expected");
             break;
     }
 
     return shareLinkOptionCell;
-
 }
 
 
@@ -306,34 +279,19 @@
 }
 
 - (void) didSelectSetPasswordLink {
-    [self showPasswordView];
+
 }
 
-
-#pragma mark - Accessory alert views
-
-- (void) showPasswordView {
+- (void) didSelectSaveShareLink {
+ //TODO request
     
-    if (self.passwordView != nil) {
-        self.passwordView = nil;
-    }
-    
-    self.passwordView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"shared_link_protected_title", nil)
-                                                  message:nil delegate:self
-                                        cancelButtonTitle:NSLocalizedString(@"cancel", nil)
-                                        otherButtonTitles:NSLocalizedString(@"ok", nil), nil];
-    
-    self.passwordView.tag = password_alert_view_tag;
-    self.passwordView.alertViewStyle = UIAlertViewStylePlainTextInput;
-    [self.passwordView textFieldAtIndex:0].delegate = self;
-    [[self.passwordView textFieldAtIndex:0] setAutocorrectionType:UITextAutocorrectionTypeNo];
-    [[self.passwordView textFieldAtIndex:0] setAutocapitalizationType:UITextAutocapitalizationTypeNone];
-    [[self.passwordView textFieldAtIndex:0] setKeyboardType:UIKeyboardTypeDefault];
-    [[self.passwordView textFieldAtIndex:0] setKeyboardAppearance:UIKeyboardAppearanceLight];
-    [[self.passwordView textFieldAtIndex:0] setSecureTextEntry:true];
-    
-    [self.passwordView show];
+    [self dismissViewControllerAnimated:true completion:nil];
 }
+
+- (void) didSelectCloseView {
+    [self dismissViewControllerAnimated:true completion:nil];
+}
+
 
 #pragma mark -
 
@@ -376,8 +334,7 @@
         [self updateSharedLinkWithPassword:@"" expirationDate:nil permissions:k_permissions_do_not_update];
         
     } else {
-        //Update with password protected
-        [self showPasswordView];
+
     }
 }
 
@@ -540,40 +497,22 @@
 
 - (void) updateInterfaceWithShareLinkStatus {
 
-    self.sharedItem = [ManageFilesDB getFileDtoByFileName:self.sharedItem.fileName andFilePath:[UtilsUrls getFilePathOnDBByFilePathOnFileDto:self.sharedItem.filePath andUser:APP_DELEGATE.activeUser] andUser:APP_DELEGATE.activeUser];
-
-    if ([ManageSharesDB getTheOCShareByFileDto:self.sharedItem andShareType:shareTypeLink andUser:APP_DELEGATE.activeUser]) {
-
-        self.sharedItem = [ManageFilesDB getFileDtoByFileName:self.sharedItem.fileName andFilePath:[UtilsUrls getFilePathOnDBByFilePathOnFileDto:self.sharedItem.filePath andUser:APP_DELEGATE.activeUser] andUser:APP_DELEGATE.activeUser];
-
-//        if (self.sharedFileOrFolder == nil) {
-//            self.sharedFileOrFolder = [ShareFileOrFolder new];
-//            self.sharedFileOrFolder.delegate = self;
-//        }
-
-        self.updatedOCShare = [ManageSharesDB getTheOCShareByFileDto:self.sharedItem andShareType:shareTypeLink andUser:APP_DELEGATE.activeUser];
-
-        if (![ self.updatedOCShare.shareWith isEqualToString:@""] && ![ self.updatedOCShare.shareWith isEqualToString:@"NULL"]  &&  self.updatedOCShare.shareType == shareTypeLink) {
-            self.isPasswordProtectEnabled = true;
-        }else{
-            self.isPasswordProtectEnabled = false;
-        }
-
-        if (self.updatedOCShare.expirationDate == 0.0) {
-            self.isExpirationDateEnabled = false;
-        }else {
-            self.isExpirationDateEnabled = true;
-        }
-
-        //self.isAllowEditingShown = [self hasAllowEditingToBeShown];
-        //self.isAllowEditingEnabled = [UtilsFramework isPermissionToReadCreateUpdate:self.updatedOCShare.permissions];
-
+    if (![ self.updatedOCShare.shareWith isEqualToString:@""] && ![ self.updatedOCShare.shareWith isEqualToString:@"NULL"]  &&  self.updatedOCShare.shareType == shareTypeLink) {
+        self.isPasswordProtectEnabled = YES;
+    }else{
+        self.isPasswordProtectEnabled = NO;
     }
-
-    //[self updateSharesOfFileFromDB];
+    
+    if (self.updatedOCShare.expirationDate == 0.0) {
+        self.isExpirationDateEnabled = NO;
+    }else {
+        self.isExpirationDateEnabled = NO;
+    }
+    
+    self.isAllowEditingShown = [self hasAllowEditingToBeShown];
+    self.isAllowEditingEnabled = [UtilsFramework isPermissionToReadCreateUpdate:self.updatedOCShare.permissions];
 
     [self reloadView];
-
 }
 
 
@@ -612,10 +551,46 @@
 
 - (void) setBarButtonStyle {
     
-    UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(didSelectCloseView)];
+    UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(didSelectSaveShareLink)];
     self.navigationItem.rightBarButtonItem = doneButton;
     
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"cancel", nil) style:UIBarButtonItemStylePlain target:self action:@selector(didSelectCloseView)];
+    self.navigationItem.leftBarButtonItem = cancelButton;
 }
+
+
+#pragma mark - UIGestureRecognizer delegate
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    // test if our control subview is on-screen
+    if ([touch.view isDescendantOfView:self.pickerView]) {
+        // we touched our control surface
+        return NO;
+    }
+    return YES;
+}
+
+#pragma mark - UITextField delegate methods
+
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField{
+    
+    return YES;
+}
+
+
+- (BOOL) hasAllowEditingToBeShown {
+    
+    if (((APP_DELEGATE.activeUser.hasCapabilitiesSupport != serverFunctionalitySupported) ||
+         (APP_DELEGATE.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && APP_DELEGATE.activeUser.capabilitiesDto.isFilesSharingAllowPublicUploadsEnabled))
+        && self.sharedItem.isDirectory){
+        return YES;
+        
+    } else {
+        
+        return NO;
+    }
+}
+
 
 /*
 #pragma mark - Navigation

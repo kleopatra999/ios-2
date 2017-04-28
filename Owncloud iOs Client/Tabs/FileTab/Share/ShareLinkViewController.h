@@ -22,7 +22,7 @@ typedef NS_ENUM (NSInteger, LinkOptionsViewMode){
     LinkOptionsViewModeEdit,
 };
 
-@interface ShareLinkViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, ManageNetworkErrorsDelegate>
+@interface ShareLinkViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UIAlertViewDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate>
 
 
 @property (nonatomic) LinkOptionsViewMode linkOptionsViewMode;
@@ -32,7 +32,6 @@ typedef NS_ENUM (NSInteger, LinkOptionsViewMode){
 @property (strong, nonatomic) UIView* datePickerContainerView;
 @property (strong, nonatomic) UIDatePicker *datePickerView;
 @property (strong, nonatomic) UIView* pickerView;
-@property (nonatomic, strong) UIAlertView *passwordView;
 
 @property (nonatomic, strong) FileDto* sharedItem;
 @property (nonatomic, strong) OCSharedDto *updatedOCShare;
