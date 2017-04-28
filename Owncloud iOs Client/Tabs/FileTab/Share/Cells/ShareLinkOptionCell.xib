@@ -46,6 +46,13 @@
                             </mask>
                         </variation>
                     </switch>
+                    <textField hidden="YES" opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="a" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="8o2-eX-fQg" userLabel="Text Field">
+                        <rect key="frame" x="8" y="8" width="304" height="30"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                        <nil key="textColor"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                        <textInputTraits key="textInputTraits"/>
+                    </textField>
                 </subviews>
                 <constraints>
                     <constraint firstItem="KwH-fr-NKC" firstAttribute="top" secondItem="bdN-Mu-iOS" secondAttribute="bottom" constant="8" id="2CQ-hw-pkY"/>
@@ -88,6 +95,7 @@
                 <outlet property="optionDetail" destination="KwH-fr-NKC" id="y4R-Vf-ClA"/>
                 <outlet property="optionName" destination="bdN-Mu-iOS" id="u3J-F0-o1E"/>
                 <outlet property="optionSwith" destination="2eu-Ak-XXg" id="A5V-kN-aIl"/>
+                <outlet property="textFieldNameLink" destination="8o2-eX-fQg" id="TWU-Hc-Clr"/>
             </connections>
             <point key="canvasLocation" x="419" y="382.5"/>
         </tableViewCell>

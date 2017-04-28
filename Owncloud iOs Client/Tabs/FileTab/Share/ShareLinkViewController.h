@@ -17,10 +17,17 @@
 #import <UIKit/UIKit.h>
 #import "OCSharedDto.h"
 
+typedef NS_ENUM (NSInteger, LinkOptionsViewMode){
+    LinkOptionsViewModeCreate,
+    LinkOptionsViewModeEdit,
+};
+
 @interface ShareLinkViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, ManageNetworkErrorsDelegate>
 
 
-@property (weak, nonatomic) IBOutlet UITableView* shareLinkOptionsTableView;
+@property (nonatomic) LinkOptionsViewMode linkOptionsViewMode;
+
+@property (strong, nonatomic) IBOutlet UITableView* shareLinkOptionsTableView;
 
 @property (strong, nonatomic) UIView* datePickerContainerView;
 @property (strong, nonatomic) UIDatePicker *datePickerView;
@@ -32,6 +39,6 @@
 
 @property (nonatomic, strong) ManageNetworkErrors *manageNetworkErrors;
 
-- (id) initWithFileDto:(FileDto *)fileDto andOCSharedDto:(OCSharedDto *)sharedDto;
+- (id) initWithFileDto:(FileDto *)fileDto andOCSharedDto:(OCSharedDto *)sharedDto andLinkOptionsViewMode:(LinkOptionsViewMode)linkOptionsViewMode;
 
 @end
