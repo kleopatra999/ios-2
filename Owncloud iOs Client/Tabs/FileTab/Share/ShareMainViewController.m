@@ -55,6 +55,9 @@
 #define shareMainLinkCellIdentifier @"ShareMainLinkCellIdentifier"
 #define shareMainLinkCellNib @"ShareMainLinkCell"
 
+#define shareWarningLinkCellIdentifier @"ShareWarningLinkCellIdentifier"
+#define shareWarningLinkCellNib @"ShareWarningLinkCell"
+
 #define heighOfFileDetailrow 120.0
 
 #define heightOfShareMainLinkRow 55.0
@@ -607,33 +610,51 @@
     return shareUserCell;
 }
 
+
 - (UITableViewCell *) getCellShareLinkByTableView:(UITableView *)tableView andIndexPath:(NSIndexPath *)indexPath {
     
-    ShareMainLinkCell* shareLinkCell = (ShareMainLinkCell*)[tableView dequeueReusableCellWithIdentifier:shareMainLinkCellIdentifier];
-    
-    if (shareLinkCell == nil) {
-        NSArray *topLevelObjects = [[NSBundle mainBundle] loadNibNamed:shareMainLinkCellNib owner:self options:nil];
-        shareLinkCell = (ShareMainLinkCell *)[topLevelObjects objectAtIndex:0];
-    }
-    // if (indexPath.row == 0) //TODO show warning row
-    
-    if (self.sharedPublicLinks.count == 0) {
-        NSString *name = NSLocalizedString(@"not_share_by_link_yet", nil);
+    if (k_warning_sharing_public_link && indexPath.row == 0) {
         
-        shareLinkCell.itemName.text = name;
-        shareLinkCell.itemName.textColor = [UIColor grayColor];
+        ShareWarningLinkCell* shareWarningLinkCell = (ShareWarningLinkCell*)[tableView dequeueReusableCellWithIdentifier:shareWarningLinkCellIdentifier];
+        
+        if (shareWarningLinkCell == nil) {
+            NSArray *topLevelObjects = [[NSBundle mainBundle] loadNibNamed:shareWarningLinkCellNib owner:self options:nil];
+            shareWarningLinkCell = (ShareWarningLinkCell *)[topLevelObjects objectAtIndex:0];
+        }
+        
+        shareWarningLinkCell.labelName.text =  NSLocalizedString(@"warning_sharing_public_link", nil);
+        shareWarningLinkCell.labelName.textColor = [UIColor grayColor];
+        shareWarningLinkCell.backgroundColor = [UIColor colorOfBackgroundWarningSharingPublicLink];
+        shareWarningLinkCell.selectionStyle = UITableViewCellEditingStyleNone;
+        
+        return shareWarningLinkCell;
         
     } else {
-        OCSharedDto *shareLink = [self.sharedPublicLinks objectAtIndex:indexPath.row];
         
-        shareLinkCell.itemName.text = ([shareLink.name length] == 0 ) ? shareLink.token: shareLink.name;
-        [shareLinkCell.buttonGetLink addTarget:self action:@selector(didSelectGetShareLink) forControlEvents:UIControlEventTouchDown];
-        shareLinkCell.accessoryType = UITableViewCellAccessoryDetailButton;
+        ShareMainLinkCell* shareLinkCell = (ShareMainLinkCell*)[tableView dequeueReusableCellWithIdentifier:shareMainLinkCellIdentifier];
+        
+        if (shareLinkCell == nil) {
+            NSArray *topLevelObjects = [[NSBundle mainBundle] loadNibNamed:shareMainLinkCellNib owner:self options:nil];
+            shareLinkCell = (ShareMainLinkCell *)[topLevelObjects objectAtIndex:0];
+        }
+        
+        if (self.sharedPublicLinks.count == 0) {
+            
+            shareLinkCell.itemName.text = NSLocalizedString(@"not_share_by_link_yet", nil);
+            shareLinkCell.itemName.textColor = [UIColor grayColor];
+            
+        } else {
+            OCSharedDto *shareLink = [self.sharedPublicLinks objectAtIndex:indexPath.row];
+            
+            shareLinkCell.itemName.text = ([shareLink.name length] == 0 ) ? shareLink.token: shareLink.name;
+            [shareLinkCell.buttonGetLink addTarget:self action:@selector(didSelectGetShareLink) forControlEvents:UIControlEventTouchDown];
+            shareLinkCell.accessoryType = UITableViewCellAccessoryDetailButton;
+        }
+        
+        shareLinkCell.selectionStyle = UITableViewCellEditingStyleNone;
+        
+        return shareLinkCell;
     }
-    
-    shareLinkCell.selectionStyle = UITableViewCellEditingStyleNone;
-    
-    return shareLinkCell;
 }
 
 
