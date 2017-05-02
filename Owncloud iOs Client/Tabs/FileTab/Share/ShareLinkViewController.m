@@ -90,7 +90,7 @@
             _isAllowEditingEnabled = NO;
         }
        
-        [self updateInterfaceWithShareLinkStatus];
+        [self updateInterfaceWithShareOptionsLinkStatus];
         
 //        _manageNetworkErrors = [ManageNetworkErrors new];
 //        _manageNetworkErrors.delegate = self;
@@ -483,7 +483,7 @@
         [self.datePickerContainerView removeFromSuperview];
     }];
     
-    [self updateInterfaceWithShareLinkStatus];
+    [self updateInterfaceWithShareOptionsLinkStatus];
     
 }
 
@@ -495,7 +495,7 @@
 
 #pragma mark -
 
-- (void) updateInterfaceWithShareLinkStatus {
+- (void) updateInterfaceWithShareOptionsLinkStatus {
 
     if (![ self.updatedOCShare.shareWith isEqualToString:@""] && ![ self.updatedOCShare.shareWith isEqualToString:@"NULL"]  &&  self.updatedOCShare.shareType == shareTypeLink) {
         self.isPasswordProtectEnabled = YES;

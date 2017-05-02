@@ -178,22 +178,6 @@
                 }
         
         self.updatedOCShare = [ManageSharesDB getTheOCShareByFileDto:self.sharedItem andShareType:shareTypeLink andUser:APP_DELEGATE.activeUser];
-        
-//        if (![ self.updatedOCShare.shareWith isEqualToString:@""] && ![ self.updatedOCShare.shareWith isEqualToString:@"NULL"]  &&  self.updatedOCShare.shareType == shareTypeLink) {
-//            self.isPasswordProtectEnabled = true;
-//        }else{
-//            self.isPasswordProtectEnabled = false;
-//        }
-//        
-//        if (self.updatedOCShare.expirationDate == 0.0) {
-//            self.isExpirationDateEnabled = false;
-//        }else {
-//            self.isExpirationDateEnabled = true;
-//        }
-        
-        //self.isAllowEditingShown = [self hasAllowEditingToBeShown];
-        //self.isAllowEditingEnabled = [UtilsFramework isPermissionToReadCreateUpdate:self.updatedOCShare.permissions];
-        
     }
     
     [self updateSharesOfFileFromDB];
@@ -226,7 +210,6 @@
             shareUser.shareeType = shareItem.shareType;
             
             [self.sharedUsersOrGroups addObject:shareUser];
-           // [self.sharedUsersOrGroups addObject:shareItem];
             
         } else if(shareItem.shareType == shareTypeLink){
             
@@ -312,24 +295,31 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     
+    NSInteger nOfRows = 0;
+    
     if (section == 0) {
-        return 1;
+        nOfRows = 1;
     }else if (section == 1 && k_is_share_with_users_available){
         if (self.sharedUsersOrGroups.count == 0) {
-           return 1;
+           nOfRows = 1;
+            
         }else{
-           return self.sharedUsersOrGroups.count;
+           nOfRows = self.sharedUsersOrGroups.count;
         }
     } else if ((section == 1 || section == 2) && k_is_share_by_link_available){
-        //TODO: check where init sharedpubliclinks
+        
         if (self.sharedPublicLinks.count == 0) {
-            return 1;
+            nOfRows = 1;
         }else{
-            return self.sharedPublicLinks.count;
+            nOfRows = self.sharedPublicLinks.count;
         }
-    } else {
-        return 0;
+        
+        if (k_warning_sharing_public_link) {
+            nOfRows = nOfRows + 1;
+        }
     }
+    
+    return nOfRows;
 }
 
 
@@ -484,12 +474,21 @@
             
             OCShareUser *sharedUser = [self.sharedUsersOrGroups objectAtIndex:indexPath.row];
             [self unShareByIdRemoteShared: sharedUser.sharedDto.idRemoteShared];
+            [self.sharedUsersOrGroups removeObjectAtIndex:indexPath.row];
             
         } else {
             
-            OCSharedDto *sharedItem = [self.sharedPublicLinks objectAtIndex:indexPath.row];
+            NSInteger indexLink = indexPath.row;
+            
+            if (k_warning_sharing_public_link) {
+                indexLink = indexLink -1 ;
+            }
+            OCSharedDto *sharedItem = [self.sharedPublicLinks objectAtIndex:indexLink];
             [self unShareByIdRemoteShared: sharedItem.idRemoteShared];
+            [self.sharedPublicLinks removeObjectAtIndex:indexLink];
         }
+        
+        [self reloadView];
     }
 }
 
@@ -642,9 +641,17 @@
             
             shareLinkCell.itemName.text = NSLocalizedString(@"not_share_by_link_yet", nil);
             shareLinkCell.itemName.textColor = [UIColor grayColor];
+            shareLinkCell.buttonGetLink.hidden = YES;
             
         } else {
-            OCSharedDto *shareLink = [self.sharedPublicLinks objectAtIndex:indexPath.row];
+            
+            NSInteger indexLink = indexPath.row;
+
+            if (k_warning_sharing_public_link) {
+                indexLink = indexLink -1 ;
+            }
+            
+            OCSharedDto *shareLink = [self.sharedPublicLinks objectAtIndex:indexLink];
             
             shareLinkCell.itemName.text = ([shareLink.name length] == 0 ) ? shareLink.token: shareLink.name;
             [shareLinkCell.buttonGetLink addTarget:self action:@selector(didSelectGetShareLink) forControlEvents:UIControlEventTouchDown];
