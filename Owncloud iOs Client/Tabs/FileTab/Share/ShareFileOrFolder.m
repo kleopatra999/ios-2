@@ -32,10 +32,6 @@
 #import "ManageUsersDB.h"
 
 
-#define server_version_with_new_shared_schema 8
-#define password_alert_view_tag 600
-
-
 @implementation ShareFileOrFolder
 
 - (void) initManageErrors {
@@ -78,100 +74,6 @@
                                                         message:@"" delegate:nil cancelButtonTitle:NSLocalizedString(@"ok", nil) otherButtonTitles:nil, nil];
         [alert show];
     }
-}
-
-
-
-
-///-----------------------------------
-/// @name Present Share Action Sheet For Token
-///-----------------------------------
-
-/**
- * This method show a Share View using a share token
- *
- * @param token -> NSString
- *
- */
-- (void) presentShareActionSheetForToken:(NSString *)sharedLink withPassword:(BOOL) isPasswordSet{
-    
-    NSString *url = nil;
-    // From ownCloud server 8.2 the url field is always set for public shares
-    if ([sharedLink hasPrefix:@"http://"] || [sharedLink hasPrefix:@"https://"])
-    {
-        url = sharedLink;
-    }else{
-        //Token
-        NSString *firstNumber = [[AppDelegate sharedOCCommunication].getCurrentServerVersion substringToIndex:1];
-        
-        if (firstNumber.integerValue >= server_version_with_new_shared_schema) {
-            // From ownCloud server version 8 on, a different share link scheme is used.
-            url = [NSString stringWithFormat:@"%@%@%@", APP_DELEGATE.activeUser.url, k_share_link_middle_part_url_after_version_8, sharedLink];
-        }else{
-            url = [NSString stringWithFormat:@"%@%@%@", APP_DELEGATE.activeUser.url, k_share_link_middle_part_url_before_version_8, sharedLink];
-        }
-    }
-    
-    UIActivityItemProvider *activityProvider = [[UIActivityItemProvider alloc] initWithPlaceholderItem:[NSURL URLWithString:url]];
-    NSArray *items = @[activityProvider, url];
-    
-    //Adding the bottom buttons on the share view
-    APCopyActivityIcon *copyLink = [[APCopyActivityIcon alloc] initWithLink:url];
-    APWhatsAppActivityIcon *whatsApp = [[APWhatsAppActivityIcon alloc] initWithLink:url];
-    
-    NSMutableArray *activities = [NSMutableArray new];
-    
-    if ([copyLink isAppInstalled]) {
-        [activities addObject:copyLink];
-    }
-    
-    if ([whatsApp isAppInstalled]) {
-        [activities addObject:whatsApp];
-    }
-    
-    UIActivityViewController *activityView = [[UIActivityViewController alloc]
-                                              initWithActivityItems:items
-                                              applicationActivities:activities];
-    
-    [activityView setExcludedActivityTypes:
-     @[UIActivityTypeAssignToContact,
-       UIActivityTypeCopyToPasteboard,
-       UIActivityTypePrint,
-       UIActivityTypeSaveToCameraRoll,
-       UIActivityTypePostToWeibo]];
-    
-    if ([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]){
-        [self.delegate finishShareWithStatus:true andWithOptions:activityView];
-    }else{
-        
-        if (IS_IPHONE) {
-            
-            [APP_DELEGATE.ocTabBarController presentViewController:activityView animated:YES completion:nil];
-            
-        } else {
-            
-            if (self.activityPopoverController) {
-                [self.activityPopoverController setContentViewController:activityView];
-            } else {
-                self.activityPopoverController = [[UIPopoverController alloc] initWithContentViewController:activityView];
-            }
-            
-            if (_isTheParentViewACell) {
-                //Present view from cell from file list
-                [self.activityPopoverController presentPopoverFromRect:_cellFrame inView:_parentView permittedArrowDirections:UIPopoverArrowDirectionLeft animated:YES];
-                
-            } else if (_parentButton) {
-                //Present view from bar button item
-                [self.activityPopoverController presentPopoverFromBarButtonItem:_parentButton permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-                
-            } else {
-                //Present  view from rect
-                [self.activityPopoverController presentPopoverFromRect:CGRectMake(100, 100, 200, 400) inView:_parentView permittedArrowDirections:UIPopoverArrowDirectionLeft animated:YES];
-            }
-        }
-       
-    }
-  
 }
 
 #pragma mark - UIActionSheetDelegate
@@ -262,9 +164,9 @@
                 [self endLoading];
                 [self errorLogin];
                 
-                if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
-                    [self.delegate finishShareWithStatus:false andWithOptions:nil];
-                }
+//                if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
+//                    [self.delegate finishShareWithStatus:false andWithOptions:nil];
+//                }
             }
         }
         
@@ -273,7 +175,7 @@
             if (isShared) {
                 
                 //Present
-                [self presentShareActionSheetForToken:blockShareDto.token withPassword:false];
+          //      [self presentShareActionSheetForToken:blockShareDto.token withPassword:false];
                 
             }else{
                 
@@ -313,14 +215,14 @@
                         [self endLoading];
                         
                         //Present
-                        [self presentShareActionSheetForToken:shareLink withPassword:false];
+                      //  [self presentShareActionSheetForToken:shareLink withPassword:false];
                     }
                     
                 } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
                     
                     [self endLoading];
                     
-                    [self.delegate finishUpdateShareWithStatus:NO];
+                  //  [self.delegate finishUpdateShareWithStatus:NO];
                     
                     BOOL isSamlCredentialsError=NO;
                     
@@ -341,7 +243,7 @@
                         if (error.code == kOCErrorServerForbidden && [self isPasswordEnforcedCapabilityEnabled]) {
                             
                             //Share whith password maybe enabled, ask for password and try to do the request again with it
-                            [self showAlertEnterPassword];
+                           // [self showAlertEnterPassword]; //TODO: ask password if needed
                             
                         } else {
                             [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
@@ -387,7 +289,7 @@
             if (error.code == kOCErrorServerForbidden && [self isPasswordEnforcedCapabilityEnabled]) {
             
                 //Share whith password maybe enabled, ask for password and try to do the request again with it
-                [self showAlertEnterPassword];
+               // [self showAlertEnterPassword]; //TODO: ask password it is needed
                 
             } else {
                 [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
@@ -465,7 +367,7 @@
             [[NSNotificationCenter defaultCenter] postNotificationName: RefreshSharesItemsAfterCheckServerVersion object: nil];
             
             //Present
-            [self presentShareActionSheetForToken:token withPassword:true];
+     //       [self presentShareActionSheetForToken:token withPassword:true];
         }
         
     } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
@@ -490,9 +392,9 @@
             
             [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
             
-            if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
-                [self.delegate finishShareWithStatus:false andWithOptions:nil];
-            }
+//            if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
+//                [self.delegate finishShareWithStatus:false andWithOptions:nil];
+//            }
         }
 
     }];
@@ -572,9 +474,9 @@
                 [self endLoading];
                 [self errorLogin];
                 
-                if([self.delegate respondsToSelector:@selector(finishUpdateShareWithStatus:)]) {
-                    [self.delegate finishUpdateShareWithStatus:false];
-                } 
+//                if([self.delegate respondsToSelector:@selector(finishUpdateShareWithStatus:)]) {
+//                    [self.delegate finishUpdateShareWithStatus:false];
+//                } 
             }
         }
         if (!isSamlCredentialsError) {
@@ -647,9 +549,9 @@
                 [self endLoading];
                 [self errorLogin];
                 
-                if([self.delegate respondsToSelector:@selector(finishUpdateShareWithStatus:)]) {
-                    [self.delegate finishUpdateShareWithStatus:false];
-                }
+//                if([self.delegate respondsToSelector:@selector(finishUpdateShareWithStatus:)]) {
+//                    [self.delegate finishUpdateShareWithStatus:false];
+//                }
             }
         }
         
@@ -746,18 +648,18 @@
             if (isSamlCredentialsError) {
                 [self errorLogin];
                 
-                if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
-                    [self.delegate finishUnShareWithStatus:false];
-                }
+//                if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
+//                    [self.delegate finishUnShareWithStatus:false];
+//                }
             }
         }
         
         if (!isSamlCredentialsError) {
             [[NSNotificationCenter defaultCenter] postNotificationName: RefreshSharesItemsAfterCheckServerVersion object: nil];
             
-            if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
-                [self.delegate finishUnShareWithStatus:true];
-            }
+//            if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
+//                [self.delegate finishUnShareWithStatus:true];
+//            }
 
         }
 
@@ -835,9 +737,9 @@
                 [self endLoading];
                 [self errorLogin];
                 
-                if([self.delegate respondsToSelector:@selector(finishCheckSharedStatusOfFile:)]) {
-                    [self.delegate finishCheckSharedStatusOfFile:false];
-                }
+//                if([self.delegate respondsToSelector:@selector(finishCheckSharedStatusOfFile:)]) {
+//                    [self.delegate finishCheckSharedStatusOfFile:false];
+//                }
             }
         }
         
@@ -957,87 +859,6 @@
         [self.delegate errorLogin];
     }
     
-}
-
-
-/*
- * Show the standar message of the error connection.
- */
-- (void)showError:(NSString *) message {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:message
-                                                        message:@"" delegate:nil cancelButtonTitle:NSLocalizedString(@"ok", nil) otherButtonTitles:nil, nil];
-        [alert show];
-    });
-}
-
-
-- (void)showAlertEnterPassword {
-    
-    self.shareProtectedAlertView = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"shared_link_protected_title", nil)
-                                                    message:NSLocalizedString(@"shared_link_protected_message", nil)
-                                                   delegate:self
-                                          cancelButtonTitle:NSLocalizedString(@"cancel", nil)
-                                          otherButtonTitles:NSLocalizedString(@"ok", nil), nil];
-    
-    self.shareProtectedAlertView.tag = password_alert_view_tag;
-    self.shareProtectedAlertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
-     [self.shareProtectedAlertView textFieldAtIndex:0].delegate = self;
-    [[self.shareProtectedAlertView textFieldAtIndex:0] setAutocorrectionType:UITextAutocorrectionTypeNo];
-    [[self.shareProtectedAlertView textFieldAtIndex:0] setAutocapitalizationType:UITextAutocapitalizationTypeNone];
-    [[self.shareProtectedAlertView textFieldAtIndex:0] setKeyboardType:UIKeyboardTypeDefault];
-    [[self.shareProtectedAlertView textFieldAtIndex:0] setKeyboardAppearance:UIKeyboardAppearanceLight];
-    [[self.shareProtectedAlertView textFieldAtIndex:0] setSecureTextEntry:true];
-    
-    [self.shareProtectedAlertView show];
-}
-
-#pragma mark - UIAlertViewDelegate
-
--(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
-    
-    if (alertView.tag == password_alert_view_tag) {
-        //alert share link enter password
-        if (buttonIndex != 0) {
-            
-            UITextField *passwordTextField = [alertView textFieldAtIndex:0];
-            AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
-            NSString *filePath = [UtilsUrls getFilePathOnDBwithRootSlashAndWithFileName:self.file.fileName ByFilePathOnFileDto:self.file.filePath andUser:app.activeUser];
-            [self doRequestSharedLinkWithPath:filePath andPassword:passwordTextField.text];
-
-        }else{
-            if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
-                [self.delegate finishShareWithStatus:false andWithOptions:nil];
-            }
-        }
-    }
-}
-
-- (void)didPresentAlertView:(UIAlertView *)alertView{
-    
-    if (alertView.tag == password_alert_view_tag) {
-        if (IS_IPHONE) {
-            if (!IS_PORTRAIT) {
-                UITextField *txtField = [alertView textFieldAtIndex:0];
-                [txtField resignFirstResponder];
-            }
-        }
-        
-    }
-}
-
-- (BOOL)alertViewShouldEnableFirstOtherButton:(UIAlertView *)alertView
-{
-    BOOL output = YES;
-    if (alertView.tag == password_alert_view_tag) {
-        UITextField *textField = [alertView textFieldAtIndex:0];
-        if ([textField.text length] == 0){
-            output = NO;
-        }
-    }
-    
-    return output;
-
 }
 
 

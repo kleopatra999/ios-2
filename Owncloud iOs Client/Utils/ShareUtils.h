@@ -14,9 +14,15 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "OCShareUser.h"
+#import "AppDelegate.h"
+#import "OCCommunication.h"
+#import "constants.h"
 
 @interface ShareUtils : NSObject
 
 + (NSMutableArray *) manageTheDuplicatedUsers: (NSMutableArray*) items;
+
++ (NSURL *) getNormalizedURLOfShareLink:(NSString *) url;
 
 @end

@@ -18,10 +18,11 @@
 #import "ShareFileOrFolder.h"
 #import "MBProgressHUD.h"
 #import "FileDto.h"
+#import "AppsActivityProvider.h"
 
-@interface ShareMainViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, ShareFileOrFolderDelegate, MBProgressHUDDelegate, UIAlertViewDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate>
+@interface ShareMainViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, ShareFileOrFolderDelegate, MBProgressHUDDelegate, UIAlertViewDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate, UIActionSheetDelegate >
 
-@property (weak, nonatomic) IBOutlet UITableView* shareTableView;
+@property (weak, nonatomic) IBOutlet UITableView *shareTableView;
 
 - (id) initWithFileDto:(FileDto *)fileDto;
 

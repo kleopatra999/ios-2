@@ -83,12 +83,6 @@
         _linkOptionsViewMode = linkOptionsViewMode;
         _sharedItem = fileDto;
         _updatedOCShare = sharedDto;
-        
-        if (linkOptionsViewMode == LinkOptionsViewModeCreate) {
-            _isPasswordProtectEnabled = NO;
-            _isExpirationDateEnabled = NO;
-            _isAllowEditingEnabled = NO;
-        }
        
         [self updateInterfaceWithShareOptionsLinkStatus];
         
@@ -231,8 +225,12 @@
         case 1:
 
             shareLinkOptionCell.optionTextField.hidden = NO;
+            shareLinkOptionCell.optionTextField.secureTextEntry = YES;
             shareLinkOptionCell.optionSwith.hidden = NO;
             [shareLinkOptionCell.optionSwith setOn:self.isPasswordProtectEnabled animated:false];
+            
+            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(passwordProtectedSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
+
             
             if (self.isPasswordProtectEnabled) {
                 shareLinkOptionCell.optionTextField.placeholder = @"**********";
@@ -496,6 +494,17 @@
 #pragma mark -
 
 - (void) updateInterfaceWithShareOptionsLinkStatus {
+    
+    if (self.linkOptionsViewMode == LinkOptionsViewModeCreate) {
+//        if () {
+//            <#statements#>
+//        }
+        self.isPasswordProtectEnabled = NO;
+        self.isExpirationDateEnabled = NO;
+        self.isAllowEditingEnabled = NO;
+    }
+    
+    
 
     if (![ self.updatedOCShare.shareWith isEqualToString:@""] && ![ self.updatedOCShare.shareWith isEqualToString:@"NULL"]  &&  self.updatedOCShare.shareType == shareTypeLink) {
         self.isPasswordProtectEnabled = YES;

@@ -134,7 +134,8 @@
     [self setStyleView];
     
     [self checkSharedStatusOFile];
-    [self updateInterfaceWithShareLinkStatus ]; //TODO:recheck where use
+    [self updateSharesOfFileFromDB];
+   // [self updateInterfaceWithShareLinkStatus ]; //TODO:recheck where use
 }
 
 - (void) viewDidAppear:(BOOL)animated{
@@ -221,31 +222,8 @@
 }
 
 
-#pragma mark - Actions with ShareFileOrFolder class
 
-- (void) getShareLinkView {
-    
-    if (self.sharedFileOrFolder == nil) {
-        self.sharedFileOrFolder = [ShareFileOrFolder new];
-        self.sharedFileOrFolder.delegate = self;
-    }
-    
-    if (IS_IPHONE) {
-        self.sharedFileOrFolder.viewToShow = self.view;
-        self.sharedFileOrFolder.parentViewController = self;
-    }else{
-        self.sharedFileOrFolder.viewToShow = self.view;
-        self.sharedFileOrFolder.parentViewController = self;
-        self.sharedFileOrFolder.parentView = self.view;
-    }
-    
-    if (self.sharedItem.sharedFileSource > 0){
-        self.sharedFileOrFolder.file = self.sharedItem;
-        [self.sharedFileOrFolder clickOnShareLinkFromFileDto:true];
-    }else{
-        [self.sharedFileOrFolder showShareActionSheetForFile:self.sharedItem];
-    }
-}
+#pragma mark - Actions with ShareFileOrFolder class
 
 - (void) unShareByIdRemoteShared:(NSInteger) idRemoteShared{
     
@@ -276,7 +254,7 @@
 }
 
 
-#pragma mark - TableView methods
+#pragma mark - TableView delegate methods
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
     
@@ -511,6 +489,23 @@
     }
 }
 
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    if ((!k_is_share_with_users_available && k_is_share_by_link_available && indexPath.section == 1 )|| indexPath.section == 2 ) {
+        
+        NSInteger indexShareLink;
+        if (k_warning_sharing_public_link) {
+            indexShareLink = indexPath.row+1;
+        } else {
+            indexShareLink = indexPath.row;
+        }
+        
+        NSURL *urlShareLink = [ShareUtils getNormalizedURLOfShareLink:self.sharedPublicLinks[indexShareLink]];
+        
+        [self presentActivityViewForShareLink:urlShareLink];
+    }
+   
+}
 
 #pragma mark - Cells
 
@@ -654,7 +649,8 @@
             OCSharedDto *shareLink = [self.sharedPublicLinks objectAtIndex:indexLink];
             
             shareLinkCell.itemName.text = ([shareLink.name length] == 0 ) ? shareLink.token: shareLink.name;
-            [shareLinkCell.buttonGetLink addTarget:self action:@selector(didSelectGetShareLink) forControlEvents:UIControlEventTouchDown];
+//            shareLinkCell.buttonGetLink.tag = shareLink.idRemoteShared;
+//            [shareLinkCell.buttonGetLink addTarget:self action:@selector(didSelectGetShareLink:) forControlEvents:UIControlEventTouchDown];
             shareLinkCell.accessoryType = UITableViewCellAccessoryDetailButton;
         }
         
@@ -682,10 +678,6 @@
 
 - (void) didSelectAddPublicLink {
     [self presentViewLinkOptionsOfSharedLink:nil ofFile:self.sharedItem withLinkOptionsViewMode:LinkOptionsViewModeCreate];
-}
-
-- (void) didSelectGetShareLink {
-    [self getShareLinkView];
 }
 
 - (void) didSelectCloseView {
@@ -727,6 +719,37 @@
         navController.modalPresentationStyle = UIModalPresentationFormSheet;
         [self presentViewController:navController animated:YES completion:nil];
     }
+}
+
+
+- (void) presentActivityViewForShareLink:(NSURL *)urlShareLink {
+    
+    
+    UIActivityItemProvider *activityProvider = [[UIActivityItemProvider alloc] initWithPlaceholderItem:urlShareLink];
+    NSArray *items = @[activityProvider,urlShareLink];
+    
+    //Adding the bottom buttons on the share view
+    APCopyActivityIcon *copyLink = [[APCopyActivityIcon alloc] initWithLink:urlShareLink.absoluteString];
+    
+    NSMutableArray *activities = [NSMutableArray new];
+    
+    if ([copyLink isAppInstalled]) {
+        [activities addObject:copyLink];
+    }
+    
+    UIActivityViewController *activityView = [[UIActivityViewController alloc]
+                                              initWithActivityItems:items
+                                              applicationActivities:activities];
+    
+    [activityView setExcludedActivityTypes:
+     @[UIActivityTypeAssignToContact,
+       UIActivityTypeCopyToPasteboard,
+       UIActivityTypePrint,
+       UIActivityTypeSaveToCameraRoll,
+       UIActivityTypePostToWeibo]];
+    
+    [self presentViewController:activityView animated:YES completion:nil];
+    
 }
 
 
@@ -780,7 +803,7 @@
          [self checkSharedStatusOFile];
         
     }else{
-       [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
+      // [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
 
     }
 }
@@ -791,24 +814,24 @@
         self.activityView = nil;
         [self checkSharedStatusOFile];
     }else{
-        [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
+        //[self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
     }
     
 }
 
 - (void) finishUpdateShareWithStatus:(BOOL)successful {
     
-    [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
+    //[self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
     
 }
 
 - (void) finishCheckSharedStatusOfFile:(BOOL)successful {
     
     if (successful && self.activityView != nil) {
-        [self updateInterfaceWithShareLinkStatus];
+        //[self updateInterfaceWithShareLinkStatus];
         [self performSelector:@selector(presentShareOptions) withObject:nil afterDelay:standardDelay];
     }else{
-        [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
+      //  [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
     }
 
 }
