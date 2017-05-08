@@ -16,6 +16,8 @@
 
 #import <UIKit/UIKit.h>
 #import "OCSharedDto.h"
+#import "ShareUtils.h"
+#import "ShareFileOrFolder.h"
 
 typedef NS_ENUM (NSInteger, LinkOptionsViewMode){
     LinkOptionsViewModeCreate,
@@ -27,16 +29,21 @@ typedef NS_ENUM (NSInteger, LinkOptionsViewMode){
 
 @property (nonatomic) LinkOptionsViewMode linkOptionsViewMode;
 
-@property (strong, nonatomic) IBOutlet UITableView* shareLinkOptionsTableView;
+@property (strong, nonatomic) IBOutlet UITableView *shareLinkOptionsTableView;
 
-@property (strong, nonatomic) UIView* datePickerContainerView;
+@property (strong, nonatomic) UIView *datePickerContainerView;
 @property (strong, nonatomic) UIDatePicker *datePickerView;
-@property (strong, nonatomic) UIView* pickerView;
+@property (strong, nonatomic) UIView *pickerView;
 
-@property (nonatomic, strong) FileDto* sharedItem;
-@property (nonatomic, strong) OCSharedDto *updatedOCShare;
+@property (nonatomic, strong) FileDto *fileShared;
+@property (nonatomic, strong) OCSharedDto *sharedDto;
+@property (nonatomic, strong) OCSharedDto *updatedSharedDto;
+
 
 @property (nonatomic, strong) ManageNetworkErrors *manageNetworkErrors;
+
+@property (nonatomic, strong) ShareFileOrFolder* sharedFileOrFolder;
+
 
 - (id) initWithFileDto:(FileDto *)fileDto andOCSharedDto:(OCSharedDto *)sharedDto andLinkOptionsViewMode:(LinkOptionsViewMode)linkOptionsViewMode;
 

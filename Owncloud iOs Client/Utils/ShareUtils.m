@@ -65,5 +65,120 @@
     return  [NSURL URLWithString:url];
 }
 
++ (BOOL) isPasswordEnforcedCapabilityEnabled {
+    
+    BOOL output;
+    
+    if ((APP_DELEGATE.activeUser.hasCapabilitiesSupport != serverFunctionalitySupported) ||
+        (APP_DELEGATE.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && APP_DELEGATE.activeUser.capabilitiesDto && APP_DELEGATE.activeUser.capabilitiesDto.isFilesSharingPasswordEnforcedEnabled) ) {
+        
+        output = YES;
+        
+    } else {
+        
+        output = NO;
+    }
+    
+    return output;
+}
+
++ (NSString *) getPasswordEncodingWithPassword:(NSString *)password {
+    
+    NSString *encodePassword = [password stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"!*'();:@&=+$,/?%#[]"]];
+    
+    return encodePassword;
+    
+}
+
+
+
++ (void) createNewShareLink:(OCSharedDto *)shareLink ofFile:(FileDto *)file {
+    
+//    [self initLoading];
+    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
+
+    
+    //Set the right credentials
+    if (k_is_sso_active) {
+        [[AppDelegate sharedOCCommunication] setCredentialsWithCookie:app.activeUser.password];
+    } else if (k_is_oauth_active) {
+        [[AppDelegate sharedOCCommunication] setCredentialsOauthWithToken:app.activeUser.password];
+    } else {
+        [[AppDelegate sharedOCCommunication] setCredentialsWithUser:app.activeUser.username andPassword:APP_DELEGATE.activeUser.password];
+    }
+    
+    [[AppDelegate sharedOCCommunication] setUserAgent:[UtilsUrls getUserAgent]];
+    
+//    __block OCSharedDto *blockShareDto = _shareDto;
+    
+    
+    //Checking the Shared files and folders
+    [[AppDelegate sharedOCCommunication] shareFileOrFolderByServer:[UtilsUrls getFullRemoteServerPath:app.activeUser] andFileOrFolderPath:file.filePath onCommunication:[AppDelegate sharedOCCommunication] successRequest:^(NSHTTPURLResponse *response, NSString *shareLink, NSString *redirectedServer) {
+        
+        BOOL isSamlCredentialsError=NO;
+        
+        //Check the login error in shibboleth
+        if (k_is_sso_active) {
+            //Check if there are fragmens of saml in url, in this case there are a credential error
+            isSamlCredentialsError = [FileNameUtils isURLWithSamlFragment:response];
+            if (isSamlCredentialsError) {
+//                [self endLoading];
+//                
+//                [self errorLogin];
+            }
+        }
+        if (!isSamlCredentialsError) {
+            
+            //Ok we have the token but we also need all the information of the file in order to populate the database
+            [[NSNotificationCenter defaultCenter] postNotificationName: RefreshSharesItemsAfterCheckServerVersion object: nil];
+            
+//            [self endLoading];
+            
+            //Present
+            //  [self presentShareActionSheetForToken:shareLink withPassword:false];
+        }
+        
+    } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
+        
+//        [self endLoading];
+        
+        BOOL isSamlCredentialsError=NO;
+        
+        //Check the login error in shibboleth
+        if (k_is_sso_active) {
+            //Check if there are fragmens of saml in url, in this case there are a credential error
+            isSamlCredentialsError = [FileNameUtils isURLWithSamlFragment:response];
+            if (isSamlCredentialsError) {
+                
+//                [self errorLogin];
+            }
+        }
+        if (!isSamlCredentialsError) {
+            
+            DLog(@"error.code: %ld", (long)error.code);
+            DLog(@"server error: %ld", (long)response.statusCode);
+            
+            if (error.code == kOCErrorServerForbidden && [self isPasswordEnforcedCapabilityEnabled]) {
+                
+                //Share whith password maybe enabled, ask for password and try to do the request again with it
+                // [self showAlertEnterPassword]; //TODO: ask password if needed
+                
+            } else {
+//                [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
+            }
+            
+            if (error.code != kOCErrorServerForbidden) {
+                
+//                if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
+//                    [self.delegate finishShareWithStatus:false andWithOptions:nil];
+//                }
+            }
+        }
+        
+    }];
+
+}
+
+
 
 @end

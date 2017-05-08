@@ -67,11 +67,6 @@
 
 #define shareTableViewSectionsNumber  3
 
-//Nº of Rows
-#define optionsShownWithShareLinkEnableAndAllowEditing 4
-#define optionsShownWithShareLinkEnableWithoutAllowEditing 3
-#define optionsShownWithShareLinkDisable 0
-
 //Date server format
 #define dateServerFormat @"YYYY-MM-dd"
 
@@ -707,6 +702,7 @@
 
 -(void) presentViewLinkOptionsOfSharedLink:(OCSharedDto *)sharedDto ofFile:(FileDto *)fileShared withLinkOptionsViewMode:(LinkOptionsViewMode)viewMode{
     ShareLinkViewController *viewController = [[ShareLinkViewController alloc] initWithFileDto:fileShared andOCSharedDto:sharedDto andLinkOptionsViewMode:viewMode];
+    viewController.sharedFileOrFolder = self.sharedFileOrFolder;
     OCNavigationController *navController = [[OCNavigationController alloc] initWithRootViewController:viewController];
     
     if (IS_IPHONE)
@@ -831,9 +827,16 @@
         //[self updateInterfaceWithShareLinkStatus];
         [self performSelector:@selector(presentShareOptions) withObject:nil afterDelay:standardDelay];
     }else{
-      //  [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
+        [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
     }
 
+}
+
+
+- (void) sharelinkOptionsUpdated {
+    [self checkSharedStatusOFile];
+    [self updateSharesOfFileFromDB];
+    [self reloadView];
 }
 
 

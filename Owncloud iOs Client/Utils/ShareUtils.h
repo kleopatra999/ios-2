@@ -18,11 +18,35 @@
 #import "AppDelegate.h"
 #import "OCCommunication.h"
 #import "constants.h"
+#import "Customization.h"
+#import "UtilsUrls.h"
+#import "FileNameUtils.h"
+#import "OCErrorMsg.h"
 
 @interface ShareUtils : NSObject
 
 + (NSMutableArray *) manageTheDuplicatedUsers: (NSMutableArray*) items;
 
 + (NSURL *) getNormalizedURLOfShareLink:(NSString *) url;
+
++ (BOOL) isPasswordEnforcedCapabilityEnabled;
+
++ (NSString *) getPasswordEncodingWithPassword:(NSString *)password;
+
+
+//network to move methods
+
+///-----------------------------------
+/// @name Add new share link
+///-----------------------------------
+
+/**
+ * Method to add new share link
+ *
+ * @param
+ */
++ (void) createNewShareLink:(OCSharedDto *)shareLink ofFile:(FileDto *)file;
+
+//updateshare
 
 @end
