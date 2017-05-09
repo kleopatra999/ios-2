@@ -259,7 +259,7 @@
         numberOfSections--;
     }
     
-    if (!k_is_share_by_link_available) {
+    if (!k_is_share_by_link_available || !(APP_DELEGATE.activeUser.hasCapabilitiesSupport && APP_DELEGATE.activeUser.capabilitiesDto.isFilesSharingShareLinkEnabled)) {
         numberOfSections--;
     }
     
@@ -643,7 +643,7 @@
             
             OCSharedDto *shareLink = [self.sharedPublicLinks objectAtIndex:indexLink];
             
-            shareLinkCell.itemName.text = ([shareLink.name length] == 0 ) ? shareLink.token: shareLink.name;
+            shareLinkCell.itemName.text = ([shareLink.name length] == 0 || [shareLink.name isEqualToString:@"(null)"] ) ? shareLink.token: shareLink.name;
 //            shareLinkCell.buttonGetLink.tag = shareLink.idRemoteShared;
 //            [shareLinkCell.buttonGetLink addTarget:self action:@selector(didSelectGetShareLink:) forControlEvents:UIControlEventTouchDown];
             shareLinkCell.accessoryType = UITableViewCellAccessoryDetailButton;

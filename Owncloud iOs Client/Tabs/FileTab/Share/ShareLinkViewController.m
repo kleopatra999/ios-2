@@ -28,6 +28,8 @@
 //Cells and Sections
 #define shareLinkOptionIdentifer @"ShareLinkOptionIdentifier"
 #define shareLinkOptionNib @"ShareLinkOptionCell"
+#define nOfSectionsWithAllOptionsAvailable 4
+
 
 //#define shareLinkButtonIdentifier @"ShareLinkButtonIdentifier"
 //#define shareLinkButtonNib @"ShareLinkButtonCell"
@@ -51,6 +53,13 @@
 #define animationsDelay 0.5
 #define largeDelay 1.0
 
+typedef NS_ENUM (NSInteger, LinkOption){
+    LinkOptionName,
+    LinkOptionPassword,
+    LinkOptionExpiration,
+    LinkOptionAllowUploads
+};
+
 
 @interface ShareLinkViewController ()
 
@@ -60,7 +69,6 @@
 @property (nonatomic) NSInteger optionsShownWithShareLink;
 
 @property (nonatomic) BOOL isAllowEditingEnabled;
-@property (nonatomic) BOOL isAllowEditingShown;
 
 @property (nonatomic, strong) UIPopoverController* activityPopoverController;
 
@@ -78,7 +86,7 @@
         _fileShared = fileDto;
         _sharedDto = sharedDto;
         _updatedSharedDto = [[OCSharedDto alloc] initWithSharedDto:sharedDto];
-       
+        
         if (self.linkOptionsViewMode == LinkOptionsViewModeCreate) {
             
             self.isPasswordProtectEnabled = NO;
@@ -126,15 +134,27 @@
 }
 
 
+-(NSInteger) getNumberOfOptionsAvailable {
+    
+    NSInteger nOfOptionsAvailable = nOfSectionsWithAllOptionsAvailable;
+    
+    if (![self hasOptionLinkNameToBeShown]) {
+        nOfOptionsAvailable = nOfOptionsAvailable -1;
+    }
+    
+    if (![self hasOptionAllowEditingToBeShown]) {
+        nOfOptionsAvailable = nOfOptionsAvailable -1;
+    }
+    
+    return nOfOptionsAvailable;
+}
+
+
 #pragma mark - TableView delegate methods
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
     
-    if (self.isAllowEditingShown) {
-        return 4;
-    } else {
-        return 3;
-    }
+    return [self getNumberOfOptionsAvailable];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -149,8 +169,8 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    if (indexPath.section == 2 ) {
-        
+    if (indexPath.section == 2 && self.isExpirationDateEnabled) {
+        //the user want to change the current expiration date
         [self didSelectSetExpirationDateLink];
     }
     
@@ -179,10 +199,18 @@
     
     switch (section) {
         case 0:
-            title = NSLocalizedString(@"title_share_link_option_name", nil);;
+            if ([self hasOptionLinkNameToBeShown]) {
+                title = NSLocalizedString(@"title_share_link_option_name", nil);;
+            } else {
+                title = NSLocalizedString(@"title_share_link_option_password", nil);;
+            }
             break;
         case 1:
-            title = NSLocalizedString(@"title_share_link_option_password", nil);
+            if ([self hasOptionLinkNameToBeShown]) {
+                title = NSLocalizedString(@"title_share_link_option_password", nil);
+            } else {
+                title = NSLocalizedString(@"title_share_link_option_expiration", nil);
+            }
             break;
         case 2:
             title = NSLocalizedString(@"title_share_link_option_expiration", nil);
@@ -211,59 +239,35 @@
     
     switch (indexPath.section) {
             
-        case 0: //option NAME
-            
-            shareLinkOptionCell.optionTextField.hidden = NO;
-            shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_name", nil);
-            if (self.linkOptionsViewMode == LinkOptionsViewModeEdit) {
-                shareLinkOptionCell.optionTextField.text = self.updatedSharedDto.name;
-            }
-            break;
-
-        case 1: //option PASSWORD
-
-            shareLinkOptionCell.optionTextField.hidden = NO;
-            shareLinkOptionCell.optionSwith.hidden = NO;
-            [shareLinkOptionCell.optionSwith setOn:self.isPasswordProtectEnabled animated:false];
-            
-            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(passwordProtectedSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
-
-            
-            if (self.isPasswordProtectEnabled) {
-                shareLinkOptionCell.optionTextField.secureTextEntry = YES;
-                shareLinkOptionCell.optionTextField.placeholder = @"**********";
+        case 0:
+            if ([self hasOptionLinkNameToBeShown]) {
+                [self getUpdatedCell:shareLinkOptionCell toOption:LinkOptionName];
             } else {
-                shareLinkOptionCell.optionTextField.secureTextEntry = NO;
-                shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_password", nil);
+                [self getUpdatedCell:shareLinkOptionCell toOption:LinkOptionPassword];
             }
+            
             break;
 
-        case 2: //option EXPIRATION
-            
-            shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_expiration", nil);
-            shareLinkOptionCell.optionSwith.hidden = NO;
-            [shareLinkOptionCell.optionSwith setOn:self.isExpirationDateEnabled animated:false];
-            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(expirationTimeSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
-
-            if (self.isExpirationDateEnabled) {
-                shareLinkOptionCell.optionTextField.hidden = YES;
-                shareLinkOptionCell.optionName.hidden = NO;
-                shareLinkOptionCell.optionName.text = [self stringOfDate:[NSDate dateWithTimeIntervalSince1970: self.updatedSharedDto.expirationDate]];
+        case 1:
+            if ([self hasOptionLinkNameToBeShown]) {
+                [self getUpdatedCell:shareLinkOptionCell toOption:LinkOptionPassword];
             } else {
-                shareLinkOptionCell.optionTextField.hidden = NO;
-                shareLinkOptionCell.optionTextField.allowsEditingTextAttributes = NO;
+                [self getUpdatedCell:shareLinkOptionCell toOption:LinkOptionExpiration];
+            }
+            break;
 
+        case 2:
+            if ([self hasOptionLinkNameToBeShown]) {
+                [self getUpdatedCell:shareLinkOptionCell toOption:LinkOptionExpiration];
+            } else {
+                [self getUpdatedCell:shareLinkOptionCell toOption:LinkOptionAllowUploads];
             }
             break;
             
-        case 3: //option ALLOW UPLOADS
+        case 3:
+            [self getUpdatedCell:shareLinkOptionCell toOption:LinkOptionAllowUploads];
             
-            shareLinkOptionCell.optionName.hidden = NO;
-            shareLinkOptionCell.optionName.text = NSLocalizedString(@"title_share_link_option_allow_editing", nil);
-            shareLinkOptionCell.optionSwith.hidden = NO;
-            [shareLinkOptionCell.optionSwith setOn:self.isAllowEditingEnabled animated:false];
-            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(allowEditingSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
-            
+          
             break;
 
         default:
@@ -273,15 +277,81 @@
     return shareLinkOptionCell;
 }
 
+- (ShareLinkOptionCell *) getUpdatedCell:(ShareLinkOptionCell *)shareLinkOptionCell toOption:(LinkOption)linkOption {
+    
+    switch (linkOption) {
+            
+        case LinkOptionName:
+            
+            shareLinkOptionCell.optionTextField.hidden = NO;
+            shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_name", nil);
+            if (self.linkOptionsViewMode == LinkOptionsViewModeEdit) {
+                shareLinkOptionCell.optionTextField.text = self.updatedSharedDto.name;
+            }
+            
+            break;
+        
+        case LinkOptionPassword:
+            
+            shareLinkOptionCell.optionTextField.hidden = NO;
+            shareLinkOptionCell.optionSwith.hidden = NO;
+            [shareLinkOptionCell.optionSwith setOn:self.isPasswordProtectEnabled animated:false];
+            
+            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(passwordProtectedSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
+            
+            if (self.isPasswordProtectEnabled) {
+                shareLinkOptionCell.optionTextField.secureTextEntry = YES;
+                shareLinkOptionCell.optionTextField.placeholder = @"**********";
+                shareLinkOptionCell.optionTextField.userInteractionEnabled = YES;
+            } else {
+                shareLinkOptionCell.optionTextField.secureTextEntry = YES;
+                shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_password", nil);
+                shareLinkOptionCell.optionTextField.userInteractionEnabled = NO;
+            }
+            
+            break;
+        
+        case LinkOptionExpiration:
+            
+            shareLinkOptionCell.optionTextField.placeholder = NSLocalizedString(@"placeholder_share_link_option_expiration", nil);
+            shareLinkOptionCell.optionSwith.hidden = NO;
+            [shareLinkOptionCell.optionSwith setOn:self.isExpirationDateEnabled animated:false];
+            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(expirationTimeSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
+            
+            if (self.isExpirationDateEnabled) {
+                shareLinkOptionCell.optionTextField.hidden = YES;
+                shareLinkOptionCell.optionName.hidden = NO;
+                shareLinkOptionCell.optionName.text = [self stringOfDate:[NSDate dateWithTimeIntervalSince1970: self.updatedSharedDto.expirationDate]];
+            } else {
+                shareLinkOptionCell.optionName.hidden = YES;
+                shareLinkOptionCell.optionTextField.hidden = NO;
+                shareLinkOptionCell.optionTextField.allowsEditingTextAttributes = NO;
+                shareLinkOptionCell.optionTextField.userInteractionEnabled = NO;
+            }
+            
+            break;
+        
+        case LinkOptionAllowUploads:
+            
+            shareLinkOptionCell.optionName.hidden = NO;
+            shareLinkOptionCell.optionName.text = NSLocalizedString(@"title_share_link_option_allow_editing", nil);
+            shareLinkOptionCell.optionSwith.hidden = NO;
+            [shareLinkOptionCell.optionSwith setOn:self.isAllowEditingEnabled animated:false];
+            [shareLinkOptionCell.optionSwith addTarget:self action:@selector(allowEditingSwithValueChanged:) forControlEvents:UIControlEventValueChanged];
+            
+            break;
+            
+        default:
+            break;
+    }
+    
+    return shareLinkOptionCell;
+}
 
 #pragma mark - Select options
 
 - (void) didSelectSetExpirationDateLink {
     [self launchDatePicker];
-}
-
-- (void) didSelectSetPasswordLink {
-
 }
 
 - (void) didSelectSaveShareLink {
@@ -337,9 +407,8 @@
     }
     
     //ALLOW UPLOADS
-    //TODO: use var permission not object
     if (self.updatedSharedDto.permissions != self.sharedDto.permissions) {
-        if (self.isAllowEditingEnabled && self.updatedSharedDto.isDirectory) {
+        if (self.updatedSharedDto.isDirectory) {
             [self updateSharedLinkWithPassword:nil expirationDate:nil permissions:self.updatedSharedDto.permissions andLinkName:nil];
         }
     }
@@ -379,7 +448,7 @@
             self.isPasswordProtectEnabled = NO;
         }
     } else {
-        self.isAllowEditingEnabled = YES;
+        self.isPasswordProtectEnabled = YES;
     }
     
     [self updateInterfaceWithShareOptionsLinkStatus];
@@ -402,14 +471,16 @@
                 return;
             } else {
                 self.updatedSharedDto.expirationDate = 0.0;
+                [self updateInterfaceWithShareOptionsLinkStatus];
             }
         } else {
             self.updatedSharedDto.expirationDate = 0.0;
+            [self updateInterfaceWithShareOptionsLinkStatus];
         }
         
     } else {
         //after date selected in picker, current share object will be update and the view reloaded
-        [self launchDatePicker];
+        [self didSelectSetExpirationDateLink];
     }
     
 }
@@ -436,8 +507,7 @@
     }else {
         self.isExpirationDateEnabled = YES;
     }
-    
-    self.isAllowEditingShown = [self hasAllowEditingToBeShown];
+
     self.isAllowEditingEnabled = [UtilsFramework isPermissionToReadCreateUpdate:self.updatedSharedDto.permissions];
 }
 
@@ -450,13 +520,34 @@
 
 #pragma mark - capabilities checks
 
-- (BOOL) hasAllowEditingToBeShown {
+- (BOOL) hasOptionAllowEditingToBeShown {
     
     AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
     
     if (((app.activeUser.hasCapabilitiesSupport != serverFunctionalitySupported) ||
          (app.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && app.activeUser.capabilitiesDto.isFilesSharingAllowPublicUploadsEnabled))
         && self.fileShared.isDirectory){
+        return YES;
+        
+    } else {
+        
+        return NO;
+    }
+}
+
+- (BOOL) hasOptionLinkNameToBeShown {
+
+    if (APP_DELEGATE.activeUser.hasPublicShareLinkOptionNameSupport) {
+        return YES;
+    }
+    
+    return NO;
+}
+
+- (BOOL) hasMultipleShareLinkAvailable {
+    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
+    
+    if (app.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && app.activeUser.capabilitiesDto.isFilesSharingAllowUserCreateMultiplePublicLinksEnabled) {
         return YES;
         
     } else {
