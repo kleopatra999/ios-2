@@ -37,7 +37,15 @@ typedef NS_ENUM (NSInteger, LinkOptionsViewMode){
 
 @property (nonatomic, strong) FileDto *fileShared;
 @property (nonatomic, strong) OCSharedDto *sharedDto;
-@property (nonatomic, strong) OCSharedDto *updatedSharedDto;
+
+@property (nonatomic, strong) NSString *password;
+@property (nonatomic) long expirationDate;
+@property (nonatomic, strong) NSString *publicUpload;
+@property (nonatomic, strong) NSString *linkName;
+
+@property (nonatomic) BOOL oldPasswordEnabledState;
+@property (nonatomic, strong) NSString *oldPublicUploadState;
+
 
 
 @property (nonatomic, strong) ManageNetworkErrors *manageNetworkErrors;
