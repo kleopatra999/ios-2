@@ -149,7 +149,7 @@
 #define k_is_share_by_link_available YES
 
 //Show warning sharing public link
-#define k_warning_sharing_public_link NO
+#define k_warning_sharing_public_link YES
 
 //Force passcode
 #define k_is_passcode_forced NO

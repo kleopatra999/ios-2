@@ -478,7 +478,11 @@
     } else if (k_is_share_by_link_available) {
         //Edit share link options
         
-        OCSharedDto *sharedDto = [self.sharedPublicLinks objectAtIndex:indexPath.row];
+        NSInteger indexShareLink = indexShareLink = indexPath.row;
+        if (k_warning_sharing_public_link) {
+            indexShareLink = indexPath.row-1;
+        }
+        OCSharedDto *sharedDto = [self.sharedPublicLinks objectAtIndex:indexShareLink];
         
         [self presentViewLinkOptionsOfSharedLink:sharedDto ofFile:self.sharedItem withLinkOptionsViewMode:LinkOptionsViewModeEdit];
     }
@@ -488,16 +492,17 @@
     
     if ((!k_is_share_with_users_available && k_is_share_by_link_available && indexPath.section == 1 )|| indexPath.section == 2 ) {
         
-        NSInteger indexShareLink;
-        if (k_warning_sharing_public_link) {
-            indexShareLink = indexPath.row+1;
-        } else {
-            indexShareLink = indexPath.row;
+        if (!k_warning_sharing_public_link || (k_warning_sharing_public_link && indexPath.row != 0) ) {
+            
+            NSInteger indexShareLink = indexShareLink = indexPath.row;
+            if (k_warning_sharing_public_link) {
+                indexShareLink = indexPath.row-1;
+            }
+            
+            NSURL *urlShareLink = [ShareUtils getNormalizedURLOfShareLink:self.sharedPublicLinks[indexShareLink]];
+            [self presentActivityViewForShareLink:urlShareLink];
         }
         
-        NSURL *urlShareLink = [ShareUtils getNormalizedURLOfShareLink:self.sharedPublicLinks[indexShareLink]];
-        
-        [self presentActivityViewForShareLink:urlShareLink];
     }
    
 }

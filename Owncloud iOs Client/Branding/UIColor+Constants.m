@@ -171,7 +171,7 @@
 }
 
 + (UIColor*)colorOfBackgroundWarningSharingPublicLink{
-    return [UIColor colorWithRed:247/255.0f green:202/255.0f blue:202/255.0f alpha:1.0f];
+    return [UIColor colorWithRed:224/255.0f green:224/255.0f blue:224/255.0f alpha:1.0f];
 }
 
 @end
