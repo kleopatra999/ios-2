@@ -3,10 +3,11 @@
 //  Owncloud iOs Client
 //
 //  Created by Javier Gonzalez on 1/10/14.
+//  Edited by Noelia Alvarez
 //
 
 /*
- Copyright (C) 2016, ownCloud GmbH.
+ Copyright (C) 2017, ownCloud GmbH.
  This code is covered by the GNU Public License Version 3.
  For distribution utilizing Apple mechanisms please see https://owncloud.org/contribute/iOS-license-exception/
  You should have received a copy of this license
@@ -25,20 +26,14 @@
 - (void) initLoading;
 - (void) endLoading;
 - (void) errorLogin;
-- (void) finishUnShareWithStatus:(BOOL)successful;
-- (void) finishShareWithStatus:(BOOL)successful andWithOptions:(UIActivityViewController*) activityView;
-- (void) finishUpdateShareWithStatus:(BOOL)successful;
-- (void) finishCheckSharedStatusOfFile:(BOOL)successful;
 - (void) sharelinkOptionsUpdated;
 @end
 
 
-@interface ShareFileOrFolder : NSObject <UIActionSheetDelegate,UITextFieldDelegate,UIAlertViewDelegate,ManageNetworkErrorsDelegate>
+@interface ShareFileOrFolder : NSObject <UIActionSheetDelegate,UIAlertViewDelegate,ManageNetworkErrorsDelegate>
 
 @property (nonatomic, strong) FileDto *file;
 @property (nonatomic, strong) OCSharedDto *shareDto;
-@property (nonatomic, strong) UIActionSheet *shareActionSheet;
-//This view is to show the shareActionSheet
 @property (nonatomic, strong) UIView *viewToShow;
 @property (nonatomic, strong) id<ShareFileOrFolderDelegate> delegate;
 @property (nonatomic, strong) UIPopoverController *activityPopoverController;
@@ -50,24 +45,7 @@
 //This view is to show the Popover with the share link options
 @property (nonatomic, strong) UIView *parentView;
 @property (nonatomic, strong) UIViewController *parentViewController;
-@property(nonatomic, strong) UIAlertView *shareProtectedAlertView;
 @property (nonatomic, strong) ManageNetworkErrors *manageNetworkErrors;
-
-
-- (void) showShareActionSheetForFile:(FileDto *) file;
-
-///-----------------------------------
-/// @name Present Share Action Sheet For Token
-///-----------------------------------
-
-/**
- * This method show a Share View using a share link
- *
- * @param sharedLink -> NSString
- *
- */
-- (void) presentShareActionSheetForToken:(NSString *)sharedLink withPassword:(BOOL) isPasswordSet;
-
 
 
 ///-----------------------------------
@@ -81,16 +59,6 @@
  */
 - (void)unshareTheFileByIdRemoteShared:(NSInteger)idRemoteShared;
 
-///-----------------------------------
-/// @name Click on share link from file
-///-----------------------------------
-
-/**
- * Method to share the file from file or from sharedDto
- *
- * @param isFile -> BOOL. Distinct between is fileDto or shareDto
- */
-- (void) clickOnShareLinkFromFileDto:(BOOL)isFileDto;
 
 
 ///-----------------------------------

@@ -3,10 +3,11 @@
 //  Owncloud iOs Client
 //
 //  Created by Gonzalo Gonzalez on 10/8/15.
+//  Edited by Noelia Alvarez
 //
 
 /*
- Copyright (C) 2016, ownCloud GmbH.
+ Copyright (C) 2017, ownCloud GmbH.
  This code is covered by the GNU Public License Version 3.
  For distribution utilizing Apple mechanisms please see https://owncloud.org/contribute/iOS-license-exception/
  You should have received a copy of this license
@@ -35,7 +36,6 @@
 #import "ShareLinkViewController.h"
 
 //tools
-#define standardDelay 0.2
 #define animationsDelay 0.5
 #define largeDelay 1.0
 
@@ -67,30 +67,10 @@
 
 #define shareTableViewSectionsNumber  3
 
-//Date server format
-#define dateServerFormat @"YYYY-MM-dd"
-
-//alert share password
-#define password_alert_view_tag 601
-
-//mail subject key
-#define k_subject_key_activityView @"subject"
-
-//permissions value to not update them
-#define k_permissions_do_not_update 0
-
-
-//typedef NS_ENUM(NSInteger, OCShareMainSection) {
-//    OCShareMainSectionUsers,
-//    OCShareMainSectionLinks,
-//    OCShareMainSectionCount
-//};
 
 @interface ShareMainViewController ()
 
 @property (nonatomic, strong) FileDto* sharedItem;
-@property (nonatomic, strong) OCSharedDto *updatedOCShare;
-@property (nonatomic, strong) NSString* sharedToken;
 @property (nonatomic, strong) ShareFileOrFolder* sharedFileOrFolder;
 @property (nonatomic, strong) MBProgressHUD* loadingView;
 @property (nonatomic, strong) UIActivityViewController *activityView;
@@ -99,7 +79,6 @@
 @property (nonatomic, strong) NSMutableArray *sharedUsersOrGroups;
 @property (nonatomic, strong) NSMutableArray *sharedPublicLinks;
 @property (nonatomic, strong) NSMutableArray *sharesOfFile;
-@property (nonatomic) NSInteger permissions;
 
 @end
 
@@ -130,7 +109,6 @@
     
     [self checkSharedStatusOFile];
     [self updateSharesOfFileFromDB];
-   // [self updateInterfaceWithShareLinkStatus ]; //TODO:recheck where use
 }
 
 - (void) viewDidAppear:(BOOL)animated{
@@ -157,29 +135,6 @@
 - (void) reloadView {
     
     [self.shareTableView reloadData];
-}
-
-#pragma mark - 
-- (void) updateInterfaceWithShareLinkStatus {
-    
-    self.sharedItem = [ManageFilesDB getFileDtoByFileName:self.sharedItem.fileName andFilePath:[UtilsUrls getFilePathOnDBByFilePathOnFileDto:self.sharedItem.filePath andUser:APP_DELEGATE.activeUser] andUser:APP_DELEGATE.activeUser];
-    
-    if ([ManageSharesDB getTheOCShareByFileDto:self.sharedItem andShareType:shareTypeLink andUser:APP_DELEGATE.activeUser]) {
-        
-        self.sharedItem = [ManageFilesDB getFileDtoByFileName:self.sharedItem.fileName andFilePath:[UtilsUrls getFilePathOnDBByFilePathOnFileDto:self.sharedItem.filePath andUser:APP_DELEGATE.activeUser] andUser:APP_DELEGATE.activeUser];
-        
-                if (self.sharedFileOrFolder == nil) {
-                    self.sharedFileOrFolder = [ShareFileOrFolder new];
-                    self.sharedFileOrFolder.delegate = self;
-                }
-        
-        self.updatedOCShare = [ManageSharesDB getTheOCShareByFileDto:self.sharedItem andShareType:shareTypeLink andUser:APP_DELEGATE.activeUser];
-    }
-    
-    [self updateSharesOfFileFromDB];
-    
-    [self reloadView];
-    
 }
 
 - (void) updateSharesOfFileFromDB {
@@ -295,7 +250,6 @@
     return nOfRows;
 }
 
-
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
@@ -326,7 +280,6 @@
         default:
             break;
     }
-    
     return cell;
     
 }
@@ -403,7 +356,6 @@
         }
         
         headerView = shareLinkHeaderCell.contentView;
-        
     }
     
     return headerView;
@@ -499,10 +451,9 @@
             NSURL *urlShareLink = [ShareUtils getNormalizedURLOfShareLink:self.sharedPublicLinks[indexShareLink]];
             [self presentActivityViewForShareLink:urlShareLink];
         }
-        
     }
-   
 }
+
 
 #pragma mark - Cells
 
@@ -729,7 +680,6 @@
 
 - (void) presentActivityViewForShareLink:(NSURL *)urlShareLink {
     
-    
     UIActivityItemProvider *activityProvider = [[UIActivityItemProvider alloc] initWithPlaceholderItem:urlShareLink];
     NSArray *items = @[activityProvider,urlShareLink];
     
@@ -801,79 +751,11 @@
    
 }
 
-- (void) finishShareWithStatus:(BOOL)successful andWithOptions:(UIActivityViewController*) activityView{
-    
-    if (successful) {
-         self.activityView = activityView;
-         [self checkSharedStatusOFile];
-        
-    }else{
-      // [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
-
-    }
-}
-
-- (void) finishUnShareWithStatus:(BOOL)successful {
-    
-    if (successful) {
-        self.activityView = nil;
-        [self checkSharedStatusOFile];
-    }else{
-        //[self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
-    }
-    
-}
-
-- (void) finishUpdateShareWithStatus:(BOOL)successful {
-    
-    //[self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
-    
-}
-
-- (void) finishCheckSharedStatusOfFile:(BOOL)successful {
-    
-    if (successful && self.activityView != nil) {
-        //[self updateInterfaceWithShareLinkStatus];
-        [self performSelector:@selector(presentShareOptions) withObject:nil afterDelay:standardDelay];
-    }else{
-        [self performSelector:@selector(updateInterfaceWithShareLinkStatus) withObject:nil afterDelay:standardDelay];
-    }
-
-}
-
 
 - (void) sharelinkOptionsUpdated {
     [self checkSharedStatusOFile];
     [self updateSharesOfFileFromDB];
     [self reloadView];
-}
-
-
-- (void) presentShareOptions{
-    
-    
-    NSString *fileOrFolderName = self.sharedItem.fileName;
-    if(self.sharedItem.isDirectory){
-        //Remove the last character (folderName/ -> folderName)
-        fileOrFolderName = [fileOrFolderName substringToIndex:fileOrFolderName.length -1];
-    }
-    
-    NSString *subject = [[NSLocalizedString(@"shared_link_mail_subject", nil)stringByReplacingOccurrencesOfString:@"$userName" withString:[ManageUsersDB getActiveUser].username]stringByReplacingOccurrencesOfString:@"$fileOrFolderName"  withString:[fileOrFolderName stringByRemovingPercentEncoding]];
-    [self.activityView setValue:subject forKey:k_subject_key_activityView];
-    
-    if (IS_IPHONE) {
-        [self presentViewController:self.activityView animated:true completion:nil];
-        [self performSelector:@selector(reloadView) withObject:nil afterDelay:standardDelay];
-    }else{
-        [self reloadView];
-        
-        self.activityPopoverController = [[UIPopoverController alloc]initWithContentViewController:self.activityView];
-        
-        NSIndexPath* indexPath = [NSIndexPath indexPathForRow:2 inSection:1];
-        UITableViewCell* cell = [self.shareTableView cellForRowAtIndexPath:indexPath];
-        
-        [self.activityPopoverController presentPopoverFromRect:cell.frame inView:self.shareTableView permittedArrowDirections:UIPopoverArrowDirectionAny animated:true];
-    }
 }
 
 #pragma mark - Error Login Methods

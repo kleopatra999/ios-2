@@ -68,7 +68,6 @@
     return  [NSURL URLWithString:url];
 }
 
-
 + (NSString *) getPasswordEncodingWithPassword:(NSString *)password {
     
     NSString *encodePassword = [password stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"!*'();:@&=+$,/?%#[]"]];
@@ -144,19 +143,14 @@
 
 + (BOOL) isPasswordEnforcedCapabilityEnabled {
     
-    BOOL output;
     
     if ((APP_DELEGATE.activeUser.hasCapabilitiesSupport != serverFunctionalitySupported) ||
         (APP_DELEGATE.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && APP_DELEGATE.activeUser.capabilitiesDto && APP_DELEGATE.activeUser.capabilitiesDto.isFilesSharingPasswordEnforcedEnabled) ) {
         
-        output = YES;
-        
-    } else {
-        
-        output = NO;
+        return YES;
     }
     
-    return output;
+    return NO;
 }
 
 
@@ -234,7 +228,6 @@
         return 0.0;
     }
 }
-
 
 
 #pragma mark - convert date

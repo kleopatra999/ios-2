@@ -3,10 +3,10 @@
 //  Owncloud iOs Client
 //
 //  Created by Javier Gonzalez on 1/10/14.
-//
+//  Edited by Noelia Alvarez
 
 /*
- Copyright (C) 2016, ownCloud GmbH.
+ Copyright (C) 2017, ownCloud GmbH.
  This code is covered by the GNU Public License Version 3.
  For distribution utilizing Apple mechanisms please see https://owncloud.org/contribute/iOS-license-exception/
  You should have received a copy of this license
@@ -27,9 +27,7 @@
 #import "FileNameUtils.h"
 #import "UtilsUrls.h"
 #import "OCSharedDto.h"
-#import "ManageCapabilitiesDB.h"
 #import "OCConstants.h"
-#import "ManageUsersDB.h"
 
 
 @implementation ShareFileOrFolder
@@ -41,59 +39,6 @@
         _manageNetworkErrors.delegate = self;
     }
 }
-
-- (void) showShareActionSheetForFile:(FileDto *)file {
-    
-    [self initManageErrors];
-    
-    if ((APP_DELEGATE.activeUser.hasShareApiSupport == serverFunctionalitySupported || APP_DELEGATE.activeUser.hasShareApiSupport == serverFunctionalityNotChecked)) {
-        _file = file;
-        
-        //We check if the file is shared
-        if (_file.sharedFileSource > 0) {
-            
-            //The file is shared so we show the options to share or unshare link
-            if (self.shareActionSheet) {
-                self.shareActionSheet = nil;
-            }
-            
-            self.shareActionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"cancel", nil) destructiveButtonTitle:NSLocalizedString(@"unshare_link", nil) otherButtonTitles:NSLocalizedString(@"share_link_long_press", nil), nil];
-            
-            if (!IS_IPHONE){
-                [self.shareActionSheet showInView:_viewToShow];
-            } else {
-                
-                [self.shareActionSheet showInView:[_viewToShow window]];
-            }
-        } else {
-            //The file is not shared so we launch the sharing inmediatly
-            [self clickOnShareLinkFromFileDto:YES];
-        }
-    } else {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"share_not_available_on_this_server", nil)
-                                                        message:@"" delegate:nil cancelButtonTitle:NSLocalizedString(@"ok", nil) otherButtonTitles:nil, nil];
-        [alert show];
-    }
-}
-
-#pragma mark - UIActionSheetDelegate
-
-- (void) actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
-    switch (buttonIndex) {
-        case 0:
-            [self clickOnUnShare];
-            
-            break;
-        case 1:
-            [self clickOnShareLinkFromFileDto:YES];
-            
-            break;
-        case 2:
-            DLog(@"Cancel");
-            break;
-    }
-}
-
 
 #pragma mark - Share Requests (create, update, unshare)
 
@@ -161,12 +106,10 @@
                 [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
             }
             
-            if (error.code != kOCErrorServerForbidden) {
-                
-                //                if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
-                //                    [self.delegate finishShareWithStatus:false andWithOptions:nil];
-                //                }
-            }
+//            if (error.code != kOCErrorServerForbidden) {
+//                
+//
+//            }
         }
 
     }];
@@ -278,19 +221,11 @@
             isSamlCredentialsError = [FileNameUtils isURLWithSamlFragment:response];
             if (isSamlCredentialsError) {
                 [self errorLogin];
-                
-//                if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
-//                    [self.delegate finishUnShareWithStatus:false];
-//                }
             }
         }
         
         if (!isSamlCredentialsError) {
             [[NSNotificationCenter defaultCenter] postNotificationName: RefreshSharesItemsAfterCheckServerVersion object: nil];
-            
-//            if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
-//                [self.delegate finishUnShareWithStatus:true];
-//            }
 
         }
 
@@ -317,11 +252,6 @@
            
             [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
         }
-        
-        if([self.delegate respondsToSelector:@selector(finishUnShareWithStatus:)]) {
-            [self.delegate finishUnShareWithStatus:false];
-        }
-
         
     }];
 }
@@ -367,10 +297,6 @@
             if (isSamlCredentialsError) {
                 [self endLoading];
                 [self errorLogin];
-                
-//                if([self.delegate respondsToSelector:@selector(finishCheckSharedStatusOfFile:)]) {
-//                    [self.delegate finishCheckSharedStatusOfFile:false];
-//                }
             }
         }
         
@@ -390,11 +316,6 @@
             [ManageFilesDB updateFilesAndSetSharedOfUser:APP_DELEGATE.activeUser.idUser];
             
             [self endLoading];
-            
-            if([self.delegate respondsToSelector:@selector(finishCheckSharedStatusOfFile:)]) {
-                [self.delegate finishCheckSharedStatusOfFile:true];
-            }
-            
         }
 
         
@@ -419,13 +340,7 @@
             
             [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
         }
-        
-        if([self.delegate respondsToSelector:@selector(finishCheckSharedStatusOfFile:)]) {
-            [self.delegate finishCheckSharedStatusOfFile:false];
-        }
     }];
-    
-    
 }
 
 

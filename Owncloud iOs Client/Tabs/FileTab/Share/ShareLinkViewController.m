@@ -20,7 +20,6 @@
 #import "UtilsFramework.h"
 #import "ManageFilesDB.h"
 #import "ManageSharesDB.h"
-#import "UtilsFramework.h"
 
 #define shareLinkViewNibName @"ShareLinkViewController"
 
@@ -29,24 +28,15 @@
 #define shareLinkOptionNib @"ShareLinkOptionCell"
 #define nOfSectionsWithAllOptionsAvailable 4
 
-
-//#define shareLinkButtonIdentifier @"ShareLinkButtonIdentifier"
-//#define shareLinkButtonNib @"ShareLinkButtonCell"
-//#define heightOfShareLinkButtonRow 40.0
-
 #define heightOfShareLinkOptionRow 55.0f
 #define heightOfShareLinkOptionSection 25.0f
 #define heightOfShareLinkOptionTitleFirstSection 55.0f
 #define heightOfShareLinkOptionFooterSection 37.0f
 
-
 //mail subject key
 #define k_subject_key_activityView @"subject"
 
-//tools
-#define standardDelay 0.2
 #define animationsDelay 0.5
-#define largeDelay 1.0
 
 typedef NS_ENUM (NSInteger, LinkOption){
     LinkOptionName,
@@ -54,7 +44,6 @@ typedef NS_ENUM (NSInteger, LinkOption){
     LinkOptionExpiration,
     LinkOptionAllowUploads
 };
-
 
 @interface ShareLinkViewController ()
 
@@ -581,7 +570,6 @@ typedef NS_ENUM (NSInteger, LinkOption){
         //show picker and after date selected, current exp date will be updated and the view reloaded
         [self didSelectSetExpirationDateLink];
     }
-    
 }
 
 - (void) allowEditingSwithValueChanged:(UISwitch*) sender{
@@ -607,7 +595,6 @@ typedef NS_ENUM (NSInteger, LinkOption){
     }
 
     self.isAllowEditingEnabled = [self.updatedPublicUpload isEqualToString:@"true"];
-    
 }
 
 - (void) updateInterfaceWithShareOptionsLinkStatus {
@@ -616,13 +603,7 @@ typedef NS_ENUM (NSInteger, LinkOption){
     
     [self updateCurrentNameAndPasswordValuesByCheckingTextfields];
     
-    [self updateErrorMessageOptionForced];
-
     [self reloadView];
-}
-
-- (void) updateErrorMessageOptionForced {
-    
 }
 
 - (void) updateCurrentNameAndPasswordValuesByCheckingTextfields {
@@ -648,7 +629,6 @@ typedef NS_ENUM (NSInteger, LinkOption){
     
     self.navigationItem.title = (self.linkOptionsViewMode == LinkOptionsViewModeCreate) ? NSLocalizedString(@"title_view_create_link", nil) :  NSLocalizedString(@"title_view_edit_link", nil) ;
     [self setBarButtonStyle];
-    
 }
 
 - (void) setBarButtonStyle {
@@ -782,7 +762,6 @@ typedef NS_ENUM (NSInteger, LinkOption){
     } completion:^(BOOL finished) {
         [self.datePickerContainerView removeFromSuperview];
         [self updateInterfaceWithShareOptionsLinkStatus];
-
     }];
     
 }
@@ -794,15 +773,5 @@ typedef NS_ENUM (NSInteger, LinkOption){
     [self updateInterfaceWithShareOptionsLinkStatus];
 }
 
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end

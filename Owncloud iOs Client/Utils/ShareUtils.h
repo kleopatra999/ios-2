@@ -18,11 +18,7 @@
 #import "OCShareUser.h"
 #import "AppDelegate.h"
 #import "OCCommunication.h"
-#import "constants.h"
 #import "Customization.h"
-#import "UtilsUrls.h"
-#import "FileNameUtils.h"
-#import "OCErrorMsg.h"
 
 @interface ShareUtils : NSObject
 
@@ -30,12 +26,12 @@
 
 + (NSURL *) getNormalizedURLOfShareLink:(NSString *) url;
 
-+ (BOOL) isPasswordEnforcedCapabilityEnabled;
-
 + (NSString *) getPasswordEncodingWithPassword:(NSString *)password;
 
 
 #pragma mark - capabilities checks
+
++ (BOOL) isPasswordEnforcedCapabilityEnabled;
 
 + (BOOL) hasOptionAllowEditingToBeShownForFile:(FileDto *)file;
 + (BOOL) hasOptionLinkNameToBeShown;
