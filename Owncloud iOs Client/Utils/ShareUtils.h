@@ -3,10 +3,11 @@
 //  Owncloud iOs Client
 //
 //  Created by Gonzalo Gonzalez on 25/1/16.
+//  Edited by Noelia Alvarez
 //
 
 /*
- Copyright (C) 2016, ownCloud GmbH.
+ Copyright (C) 2017, ownCloud GmbH.
  This code is covered by the GNU Public License Version 3.
  For distribution utilizing Apple mechanisms please see https://owncloud.org/contribute/iOS-license-exception/
  You should have received a copy of this license
@@ -34,19 +35,29 @@
 + (NSString *) getPasswordEncodingWithPassword:(NSString *)password;
 
 
-//network to move methods
+#pragma mark - capabilities checks
 
-///-----------------------------------
-/// @name Add new share link
-///-----------------------------------
++ (BOOL) hasOptionAllowEditingToBeShownForFile:(FileDto *)file;
++ (BOOL) hasOptionLinkNameToBeShown;
++ (BOOL) hasMultipleShareLinkAvailable;
++ (BOOL) hasPasswordRemoveOptionAvailable;
++ (BOOL) hasExpirationRemoveOptionAvailable;
++ (BOOL) hasExpirationDefaultDateToBeShown;
 
-/**
- * Method to add new share link
- *
- * @param
- */
-+ (void) createNewShareLink:(OCSharedDto *)shareLink ofFile:(FileDto *)file;
 
-//updateshare
+#pragma mark - Get default values
+
++ (NSString *) getDefaultLinkNameNormalicedOfFile:(FileDto *)file withLinkShares:(NSArray *)publicLinkShared;
+
++ (long) getDefaultMinExpirationDateInTimeInterval;
++ (long) getDefaultMaxExpirationDateInTimeInterval;
+
+
+#pragma mark - convert date
+
++ (NSDate *) addDays:(NSInteger)days toDate:(NSDate *)date;
++ (NSString *) convertDateInServerFormat:(NSDate *)date;
++ (NSString *) stringOfDate:(NSDate *) date;
+
 
 @end

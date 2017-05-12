@@ -38,21 +38,26 @@ typedef NS_ENUM (NSInteger, LinkOptionsViewMode){
 @property (nonatomic, strong) FileDto *fileShared;
 @property (nonatomic, strong) OCSharedDto *sharedDto;
 
-@property (nonatomic, strong) NSString *password;
-@property (nonatomic) long expirationDate;
-@property (nonatomic, strong) NSString *publicUpload;
-@property (nonatomic, strong) NSString *linkName;
+@property (nonatomic, strong) NSString *updatedPassword;
+@property (nonatomic) long updatedExpirationDate;
+@property (nonatomic, strong) NSString *updatedPublicUpload;
+@property (nonatomic, strong) NSString *updatedLinkName;
 
 @property (nonatomic) BOOL oldPasswordEnabledState;
 @property (nonatomic, strong) NSString *oldPublicUploadState;
 
 
+@property (nonatomic) BOOL showErrorPasswordForced;
+@property (nonatomic) BOOL showErrorExpirationForced;
+
+
+@property (nonatomic, strong) UITapGestureRecognizer *singleTap;
 
 @property (nonatomic, strong) ManageNetworkErrors *manageNetworkErrors;
 
 @property (nonatomic, strong) ShareFileOrFolder* sharedFileOrFolder;
 
 
-- (id) initWithFileDto:(FileDto *)fileDto andOCSharedDto:(OCSharedDto *)sharedDto andLinkOptionsViewMode:(LinkOptionsViewMode)linkOptionsViewMode;
+- (id) initWithFileDto:(FileDto *)fileDto andOCSharedDto:(OCSharedDto *)sharedDto andDefaultLinkName:(NSString *)defaultLinkName andLinkOptionsViewMode:(LinkOptionsViewMode)linkOptionsViewMode;
 
 @end

@@ -448,20 +448,17 @@
             OCShareUser *sharedUser = [self.sharedUsersOrGroups objectAtIndex:indexPath.row];
             [self unShareByIdRemoteShared: sharedUser.sharedDto.idRemoteShared];
             [self.sharedUsersOrGroups removeObjectAtIndex:indexPath.row];
+            [self reloadView];
             
         } else {
             
             NSInteger indexLink = indexPath.row;
-            
             if (k_warning_sharing_public_link) {
                 indexLink = indexLink -1 ;
             }
-            OCSharedDto *sharedItem = [self.sharedPublicLinks objectAtIndex:indexLink];
-            [self unShareByIdRemoteShared: sharedItem.idRemoteShared];
-            [self.sharedPublicLinks removeObjectAtIndex:indexLink];
+            
+            [self confirmRemoveShareLink:indexLink];
         }
-        
-        [self reloadView];
     }
 }
 
@@ -512,8 +509,8 @@
 - (ShareLinkHeaderCell *) getHeaderCellForShareWithUsersOrGroups:(ShareLinkHeaderCell *) shareLinkHeaderCell {
     
     shareLinkHeaderCell.titleSection.text = NSLocalizedString(@"share_with_users_or_groups", nil);
-    shareLinkHeaderCell.switchSection.hidden = true;
-    shareLinkHeaderCell.addButtonSection.hidden = false;
+    shareLinkHeaderCell.switchSection.hidden = YES;
+    shareLinkHeaderCell.addButtonSection.hidden = NO;
     
     [shareLinkHeaderCell.addButtonSection addTarget:self action:@selector(didSelectAddUserOrGroup) forControlEvents:UIControlEventTouchUpInside];
     
@@ -523,10 +520,14 @@
 - (ShareLinkHeaderCell *) getHeaderCellForShareByLink:(ShareLinkHeaderCell *) shareLinkHeaderCell {
     
     shareLinkHeaderCell.titleSection.text = NSLocalizedString(@"share_link_title", nil);
-    shareLinkHeaderCell.switchSection.hidden = true;
-    shareLinkHeaderCell.addButtonSection.hidden = false;
+    shareLinkHeaderCell.switchSection.hidden = YES;
     
-    [shareLinkHeaderCell.addButtonSection addTarget:self action:@selector(didSelectAddPublicLink) forControlEvents:UIControlEventTouchUpInside];
+    if ([self.sharedPublicLinks count] > 0 && ![ShareUtils hasMultipleShareLinkAvailable]) {
+        shareLinkHeaderCell.addButtonSection.hidden = YES;
+    } else {
+        shareLinkHeaderCell.addButtonSection.hidden = NO;
+        [shareLinkHeaderCell.addButtonSection addTarget:self action:@selector(didSelectAddPublicLink) forControlEvents:UIControlEventTouchUpInside];
+    }
     
     return shareLinkHeaderCell;
 }
@@ -706,7 +707,10 @@
 }
 
 -(void) presentViewLinkOptionsOfSharedLink:(OCSharedDto *)sharedDto ofFile:(FileDto *)fileShared withLinkOptionsViewMode:(LinkOptionsViewMode)viewMode{
-    ShareLinkViewController *viewController = [[ShareLinkViewController alloc] initWithFileDto:fileShared andOCSharedDto:sharedDto andLinkOptionsViewMode:viewMode];
+    
+    NSString *defaultLinkName = [ShareUtils getDefaultLinkNameNormalicedOfFile:fileShared withLinkShares:self.sharedPublicLinks];
+    
+    ShareLinkViewController *viewController = [[ShareLinkViewController alloc] initWithFileDto:fileShared andOCSharedDto:sharedDto andDefaultLinkName:defaultLinkName andLinkOptionsViewMode:viewMode];
     viewController.sharedFileOrFolder = self.sharedFileOrFolder;
     OCNavigationController *navController = [[OCNavigationController alloc] initWithRootViewController:viewController];
     
@@ -905,37 +909,45 @@
     }else{
         [self showErrorWithTitle:NSLocalizedString(@"error_login_message", nil)];
     }
-    
 }
 
 - (void)showErrorWithTitle: (NSString *)title {
     
     UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title message:@"" delegate:self cancelButtonTitle:NSLocalizedString(@"ok", nil) otherButtonTitles:nil, nil];
     [alertView show];
-    
-    
 }
 
+#pragma mark - Confirm remove shares
 
-//TODO disabled + button
-//- (void) sharedLinkSwithValueChanged: (UISwitch*)sender {
-//
-//    if (APP_DELEGATE.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && APP_DELEGATE.activeUser.capabilitiesDto) {
-//        OCCapabilities *cap = APP_DELEGATE.activeUser.capabilitiesDto;
-//
-//        if (!cap.isFilesSharingShareLinkEnabled) {
-//            sender.on = false;
-//            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"not_share_link_enabled_capabilities", nil) message:@"" delegate:nil cancelButtonTitle:NSLocalizedString(@"ok", nil) otherButtonTitles:nil, nil];
-//            [alertView show];
-//            return;
-//        }
-//    }
-//
-//        [self getShareLinkView];
-//        [self unShareByLink];
-//
-//}
-
+- (void) confirmRemoveShareLink:(NSInteger)indexLink {
+    OCSharedDto *sharedLinkToRemove = self.sharedPublicLinks[indexLink];
+    NSString *message = [NSLocalizedString(@"message_confirm_delete_link", nil)  stringByReplacingOccurrencesOfString:@"$sharedLink" withString:sharedLinkToRemove.name];
+    UIAlertController * alert =  [UIAlertController
+                                  alertControllerWithTitle:NSLocalizedString(@"title_confirm_delete_link", nil)
+                                  message: message
+                                  preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction* ok = [UIAlertAction
+                         actionWithTitle:NSLocalizedString(@"ok", nil)
+                         style:UIAlertActionStyleDefault
+                         handler:^(UIAlertAction * action)
+                         {
+                             [self unShareByIdRemoteShared: sharedLinkToRemove.idRemoteShared];
+                             [self.sharedPublicLinks removeObjectAtIndex:indexLink];
+                             [self reloadView];
+                         }];
+    UIAlertAction* cancel = [UIAlertAction
+                             actionWithTitle:NSLocalizedString(@"cancel", nil)
+                             style:UIAlertActionStyleDefault
+                             handler:^(UIAlertAction * action)
+                             {
+                                 [alert dismissViewControllerAnimated:YES completion:nil];
+                             }];
+    [alert addAction:ok];
+    [alert addAction:cancel];
+    
+    [self presentViewController:alert animated:YES completion:nil];
+}
 
 
 @end

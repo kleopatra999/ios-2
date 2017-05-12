@@ -3,16 +3,19 @@
 //  Owncloud iOs Client
 //
 //  Created by Gonzalo Gonzalez on 25/1/16.
+//  Edited by Noelia Alvarez
 //
 //
 
 #import "ShareUtils.h"
-
+#import "FileDto.h"
 
 #define k_share_link_middle_part_url_before_version_8 @"public.php?service=files&t="
 #define k_share_link_middle_part_url_after_version_8 @"index.php/s/"
 
 #define k_server_version_with_new_shared_schema 8
+
+#define dateServerFormat @"YYYY-MM-dd"
 
 
 @implementation ShareUtils
@@ -65,6 +68,80 @@
     return  [NSURL URLWithString:url];
 }
 
+
++ (NSString *) getPasswordEncodingWithPassword:(NSString *)password {
+    
+    NSString *encodePassword = [password stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"!*'();:@&=+$,/?%#[]"]];
+    
+    return encodePassword;
+    
+}
+
+
+#pragma mark - capabilities checks
+
++ (BOOL) hasOptionAllowEditingToBeShownForFile:(FileDto *)file {
+    
+    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
+    
+    if (((app.activeUser.hasCapabilitiesSupport != serverFunctionalitySupported) ||
+         (app.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && app.activeUser.capabilitiesDto.isFilesSharingAllowPublicUploadsEnabled))
+        && file.isDirectory){
+        return YES;
+    }
+    
+    return NO;
+}
+
++ (BOOL) hasOptionLinkNameToBeShown {
+    
+    if (APP_DELEGATE.activeUser.hasPublicShareLinkOptionNameSupport) {
+        return YES;
+    }
+    
+    return NO;
+}
+
++ (BOOL) hasMultipleShareLinkAvailable {
+    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
+    
+    if (app.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && app.activeUser.capabilitiesDto.isFilesSharingAllowUserCreateMultiplePublicLinksEnabled) {
+        return YES;
+    }
+        
+    return NO;
+}
+
++ (BOOL) hasPasswordRemoveOptionAvailable {
+    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
+
+    if (app.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && app.activeUser.capabilitiesDto.isFilesSharingPasswordEnforcedEnabled) {
+        return NO;
+    }
+    
+    return YES;
+}
+
++ (BOOL) hasExpirationRemoveOptionAvailable {
+    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
+    
+    if (app.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && app.activeUser.capabilitiesDto.isFilesSharingExpireDateEnforceEnabled) {
+        return NO;
+    }
+    
+    return YES;
+}
+
++ (BOOL) hasExpirationDefaultDateToBeShown {
+    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
+
+    if (app.activeUser.hasCapabilitiesSupport == serverFunctionalitySupported && app.activeUser.capabilitiesDto.isFilesSharingExpireDateByDefaultEnabled) {
+        return YES;
+    }
+    
+    return NO;
+}
+
 + (BOOL) isPasswordEnforcedCapabilityEnabled {
     
     BOOL output;
@@ -82,103 +159,120 @@
     return output;
 }
 
-+ (NSString *) getPasswordEncodingWithPassword:(NSString *)password {
+
+#pragma mark - Default value for link name
+
++ (NSString *) getDefaultLinkNameNormalicedOfFile:(FileDto *)file withLinkShares:(NSArray *)publicLinkShared {
     
-    NSString *encodePassword = [password stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"!*'();:@&=+$,/?%#[]"]];
+    NSString *fileNameNormaliced = [file.fileName stringByRemovingPercentEncoding];
+    if (file.isDirectory) {
+        fileNameNormaliced = [fileNameNormaliced substringToIndex:[fileNameNormaliced length]-1];
+    }
+
+    NSString *linkName = [NSLocalizedString(@"default_link_name", nil) stringByReplacingOccurrencesOfString:@"$fileName" withString:fileNameNormaliced];
+    NSString *linkNameNormaliced = [NSString stringWithString:linkName];
+
+    NSInteger nShared = [publicLinkShared count];
+
+    BOOL alreadyExist = NO;
     
-    return encodePassword;
+    NSPredicate *predicateSameFileName = [NSPredicate predicateWithFormat:@"name == %@", linkNameNormaliced];
+    NSArray *linksSameName = [publicLinkShared filteredArrayUsingPredicate:predicateSameFileName];
+
+    if (linksSameName != nil && [linksSameName count] > 0) {
+        
+        alreadyExist = YES;
+        
+        //keep searching with the rest of numbers
+        
+        for (int i=2; i<=nShared; i++) {
+            linkNameNormaliced = [NSString stringWithFormat:@"%@ (%d)",linkName, i];
+            
+            predicateSameFileName = [NSPredicate predicateWithFormat:@"name == %@", linkNameNormaliced];
+            linksSameName = [publicLinkShared filteredArrayUsingPredicate:predicateSameFileName];
+            
+            if (linksSameName == nil || [linksSameName count] == 0) {
+                alreadyExist = NO;
+                break;
+            }
+        }
+    }
+
+    if (alreadyExist) {
+        linkNameNormaliced = [NSString stringWithFormat:@"%@ (%lu)",linkName,nShared+1];
+    }
     
+    return linkNameNormaliced;
+}
+
+
+#pragma mark - Default Dates for datePicker
+
++ (long) getDefaultMinExpirationDateInTimeInterval {
+    
+    NSDateComponents *deltaComps = [NSDateComponents new];
+    [deltaComps setDay:1];
+    NSDate *tomorrow = [[NSCalendar currentCalendar] dateByAddingComponents:deltaComps toDate:[NSDate date] options:0];
+    
+    NSLog(@"date is %@",[self convertDateInServerFormat:tomorrow]);
+              
+    return [tomorrow timeIntervalSince1970];
+}
+
++ (long) getDefaultMaxExpirationDateInTimeInterval {
+    
+    if ([ShareUtils hasExpirationDefaultDateToBeShown]) {
+        
+        NSInteger days = APP_DELEGATE.activeUser.capabilitiesDto.filesSharingExpireDateDaysNumber;
+        NSDate *newDate = [ShareUtils addDays:days toDate:[NSDate date]];
+        
+        NSLog(@"date is %@",[self convertDateInServerFormat:newDate]);
+        return [newDate timeIntervalSince1970];
+        
+    } else {
+        
+        return 0.0;
+    }
 }
 
 
 
-//+ (void) createNewShareLink:(OCSharedDto *)shareLink ofFile:(FileDto *)file {
-//    
-////    [self initLoading];
-//    AppDelegate *app = (AppDelegate *)[[UIApplication sharedApplication]delegate];
-//
-//    
-//    //Set the right credentials
-//    if (k_is_sso_active) {
-//        [[AppDelegate sharedOCCommunication] setCredentialsWithCookie:app.activeUser.password];
-//    } else if (k_is_oauth_active) {
-//        [[AppDelegate sharedOCCommunication] setCredentialsOauthWithToken:app.activeUser.password];
-//    } else {
-//        [[AppDelegate sharedOCCommunication] setCredentialsWithUser:app.activeUser.username andPassword:APP_DELEGATE.activeUser.password];
-//    }
-//    
-//    [[AppDelegate sharedOCCommunication] setUserAgent:[UtilsUrls getUserAgent]];
-//    
-////    __block OCSharedDto *blockShareDto = _shareDto;
-//    
-//    
-//    //Checking the Shared files and folders
-//    [[AppDelegate sharedOCCommunication] shareFileOrFolderByServer:[UtilsUrls getFullRemoteServerPath:app.activeUser] andFileOrFolderPath:file.filePath onCommunication:[AppDelegate sharedOCCommunication] successRequest:^(NSHTTPURLResponse *response, NSString *shareLink, NSString *redirectedServer) {
-//        
-//        BOOL isSamlCredentialsError=NO;
-//        
-//        //Check the login error in shibboleth
-//        if (k_is_sso_active) {
-//            //Check if there are fragmens of saml in url, in this case there are a credential error
-//            isSamlCredentialsError = [FileNameUtils isURLWithSamlFragment:response];
-//            if (isSamlCredentialsError) {
-////                [self endLoading];
-////                
-////                [self errorLogin];
-//            }
-//        }
-//        if (!isSamlCredentialsError) {
-//            
-//            //Ok we have the token but we also need all the information of the file in order to populate the database
-//            [[NSNotificationCenter defaultCenter] postNotificationName: RefreshSharesItemsAfterCheckServerVersion object: nil];
-//            
-////            [self endLoading];
-//            
-//            //Present
-//            //  [self presentShareActionSheetForToken:shareLink withPassword:false];
-//        }
-//        
-//    } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
-//        
-////        [self endLoading];
-//        
-//        BOOL isSamlCredentialsError=NO;
-//        
-//        //Check the login error in shibboleth
-//        if (k_is_sso_active) {
-//            //Check if there are fragmens of saml in url, in this case there are a credential error
-//            isSamlCredentialsError = [FileNameUtils isURLWithSamlFragment:response];
-//            if (isSamlCredentialsError) {
-//                
-////                [self errorLogin];
-//            }
-//        }
-//        if (!isSamlCredentialsError) {
-//            
-//            DLog(@"error.code: %ld", (long)error.code);
-//            DLog(@"server error: %ld", (long)response.statusCode);
-//            
-//            if (error.code == kOCErrorServerForbidden && [self isPasswordEnforcedCapabilityEnabled]) {
-//                
-//                //Share whith password maybe enabled, ask for password and try to do the request again with it
-//                // [self showAlertEnterPassword]; //TODO: ask password if needed
-//                
-//            } else {
-////                [self.manageNetworkErrors manageErrorHttp:response.statusCode andErrorConnection:error andUser:app.activeUser];
-//            }
-//            
-//            if (error.code != kOCErrorServerForbidden) {
-//                
-////                if([self.delegate respondsToSelector:@selector(finishShareWithStatus:andWithOptions:)]) {
-////                    [self.delegate finishShareWithStatus:false andWithOptions:nil];
-////                }
-//            }
-//        }
-//        
-//    }];
-//
-//}
+#pragma mark - convert date
+
++ (NSDate *) addDays:(NSInteger)days toDate:(NSDate *)date {
+
+    // Create and initialize date component instance
+    NSDateComponents *dateComponents = [[NSDateComponents alloc] init];
+    [dateComponents setDay:days];
+    
+    // Retrieve date with increased days count
+    NSDate *newDate = [[NSCalendar currentCalendar]
+                       dateByAddingComponents:dateComponents
+                       toDate:date options:0];
+    
+    return newDate;
+}
+
++ (NSString *) convertDateInServerFormat:(NSDate *)date {
+    
+    NSDateFormatter *dateFormatter = [NSDateFormatter new];
+    
+    [dateFormatter setDateFormat:dateServerFormat];
+    
+    return [dateFormatter stringFromDate:date];
+}
 
 
++ (NSString *) stringOfDate:(NSDate *) date {
+    
+    NSDateFormatter *dateFormatter = [NSDateFormatter new];
+    
+    [dateFormatter setDateStyle:NSDateFormatterMediumStyle];
+    
+    NSLocale *locale = [NSLocale currentLocale];
+    [dateFormatter setLocale:locale];
+    
+    return [dateFormatter stringFromDate:date];
+}
 
 @end
